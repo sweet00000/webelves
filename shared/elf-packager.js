@@ -1,8 +1,16 @@
-const MODEL_URL = 'https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q4_k_m.gguf';
+const MODEL_URL = 'https://huggingface.co/bartowski/SmolLM2-360M-Instruct-GGUF/resolve/main/SmolLM2-360M-Instruct-Q4_K_M.gguf';
 const RUNTIME_FILES = [
   ['runtime/wllama.worker-CDenxa0H.js', '/open/webelves/assets/wllama.worker-CDenxa0H.js'],
   ['runtime/wllama-DTxmcCWH.wasm', '/open/webelves/assets/wllama-DTxmcCWH.wasm'],
   ['runtime/wllama-JeypyGAC.wasm', '/open/webelves/assets/wllama-JeypyGAC.wasm'],
+];
+const PYODIDE_BASE = 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/';
+const PYODIDE_FILES = [
+  ['pyodide/pyodide.js', `${PYODIDE_BASE}pyodide.js`],
+  ['pyodide/pyodide.asm.js', `${PYODIDE_BASE}pyodide.asm.js`],
+  ['pyodide/pyodide.asm.wasm', `${PYODIDE_BASE}pyodide.asm.wasm`],
+  ['pyodide/python_stdlib.zip', `${PYODIDE_BASE}python_stdlib.zip`],
+  ['pyodide/pyodide-lock.json', `${PYODIDE_BASE}pyodide-lock.json`],
 ];
 
 const enc = text => new TextEncoder().encode(text);
@@ -188,12 +196,192 @@ main().catch(e=>status.textContent='Package check failed: '+e.message);
 </script></body></html>`;
 }
 
+function codelvesOfflineViewer() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codelves Offline ELF</title>
+<style>
+:root{--bg:#070808;--panel:#111315;--panel2:#161819;--edge:#252829;--ink:#f4f2ea;--soft:#b9b7ae;--faint:#77756e;--accent:#5fcfb8;--rose:#e87a8a;--warn:#f0c674}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+header{position:sticky;top:0;z-index:2;background:rgba(7,8,8,.92);border-bottom:1px solid var(--edge);backdrop-filter:blur(12px)}
+.bar{max-width:1240px;margin:0 auto;padding:13px 18px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{font-weight:800;color:var(--accent)}.meta{font:12px ui-monospace,Consolas,monospace;color:var(--faint)}
+main{max-width:1240px;margin:0 auto;padding:20px 18px 44px;display:grid;grid-template-columns:240px minmax(0,1fr) 340px;gap:14px}.panel,.sidebar{border:1px solid var(--edge);background:var(--panel);border-radius:8px;min-width:0}.sidebar{padding:10px;align-self:start;max-height:calc(100vh - 92px);overflow:auto;position:sticky;top:72px}
+.kicker{font:700 10px ui-monospace,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}.file{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--soft);padding:7px 9px;border-radius:5px;font:12px ui-monospace,Consolas,monospace;cursor:pointer;overflow:hidden;text-overflow:ellipsis}.file:hover,.file.active{background:var(--panel2);color:var(--ink)}
+.panel{padding:14px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}.title{font-weight:750}.pill{display:inline-flex;border:1px solid var(--edge);border-radius:999px;padding:3px 8px;margin:2px;color:var(--faint);font:11px ui-monospace,Consolas,monospace}
+textarea,pre{font:12px/1.6 ui-monospace,Consolas,monospace}textarea{width:100%;min-height:360px;background:#070808;color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:12px;resize:vertical}pre{white-space:pre-wrap;overflow:auto;color:var(--soft);background:#070808;border:1px solid var(--edge);border-radius:6px;padding:12px;min-height:112px;max-height:340px}
+button{background:var(--panel2);color:var(--ink);border:1px solid var(--edge);border-radius:5px;padding:8px 11px;font-weight:700;cursor:pointer}button.primary{background:var(--accent);color:#04140f;border-color:var(--accent)}button:disabled{opacity:.45;cursor:wait}.status{color:var(--faint);font:12px ui-monospace,Consolas,monospace;margin-top:8px}.ok{color:var(--accent)}.warn{color:var(--warn)}
+.chat-log{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}.msg{border:1px solid var(--edge);border-radius:6px;padding:9px;background:#0c0d0e}.msg b{display:block;color:var(--accent);font:10px ui-monospace,Consolas,monospace;text-transform:uppercase;letter-spacing:.14em;margin-bottom:4px}
+@media(max-width:980px){main{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:220px}textarea{min-height:260px}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div><span class="brand">codelves</span> <span class="meta">full offline .elf package</span></div><div class="meta" id="created"></div></div></header>
+<main>
+  <aside class="sidebar"><div class="kicker">Workspace</div><div id="fileList"></div><div id="tags" style="margin-top:12px"></div></aside>
+  <section class="panel">
+    <div class="toolbar"><div><div class="kicker">Python</div><div class="title" id="fileTitle">No file</div></div><button class="primary" id="runBtn" disabled>Run Python</button></div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div class="status" id="pythonStatus">Loading bundled Pyodide...</div>
+    <pre id="output"></pre>
+  </section>
+  <aside class="panel">
+    <div class="toolbar"><div><div class="kicker">LLM</div><div class="title">Bundled SmolLM2</div></div><button id="loadModelBtn">Load model</button></div>
+    <div class="status" id="modelStatus">Model is bundled at <code>model/smollm2.gguf</code>.</div>
+    <div class="chat-log" id="chatLog"></div>
+    <textarea id="question" style="min-height:82px">Explain the current file.</textarea>
+    <button class="primary" id="askBtn" disabled>Ask bundled model</button>
+    <pre id="answer"></pre>
+    <details style="margin-top:14px"><summary class="meta">Manifest</summary><pre id="manifestView"></pre></details>
+  </aside>
+</main>
+<script src="pyodide/pyodide.js"></script>
+<script>
+let worker,nextId=1,pending=new Map(),pyodide=null,active=null;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+async function readJson(path){return fetch(path).then(r=>{if(!r.ok)throw new Error(path+' HTTP '+r.status);return r.json()})}
+function appendOut(text){output.textContent += text + '\\n'; output.scrollTop = output.scrollHeight}
+async function initPython(){
+  try{
+    pyodide = await loadPyodide({ indexURL: 'pyodide/' });
+    pythonStatus.innerHTML = '<span class="ok">Python ready.</span> Bundled Pyodide core loaded offline.';
+    runBtn.disabled = false;
+  }catch(e){pythonStatus.innerHTML = '<span class="warn">Python failed:</span> '+esc(e.message)}
+}
+function startWorker(){
+  worker=new Worker('runtime/wllama.worker-CDenxa0H.js',{type:'module'});
+  worker.onmessage=e=>{const m=e.data,p=pending.get(m.id);if(m.type==='progress')modelStatus.textContent='Loading model... '+Math.round((m.pct||0)*100)+'%';if(!p)return;if(m.type==='ready'){pending.delete(m.id);p.resolve()}if(m.type==='token')p.onToken&&p.onToken(m.token);if(m.type==='done'){pending.delete(m.id);p.resolve(m.text)}if(m.type==='error'){pending.delete(m.id);p.reject(new Error(m.error||m.message||'model error'))}};
+}
+function initModel(){
+  if(!worker)startWorker();
+  const id=nextId++;
+  return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject});worker.postMessage({type:'init',id,modelId:'offline-smollm2',spec:{chunks:['model/smollm2.gguf'],contextLength:2048}})});
+}
+function complete(messages,onToken){
+  const id=nextId++;
+  return new Promise((resolve,reject)=>{pending.set(id,{resolve,reject,onToken});worker.postMessage({type:'complete',id,messages,temperature:.35,maxTokens:420,stop:['<|im_end|>','<|im_start|>']})});
+}
+function renderFiles(files){
+  fileList.innerHTML=files.map((f,i)=>'<button class="file '+(f===active?'active':'')+'" data-i="'+i+'">'+esc(f.path)+'</button>').join('');
+  fileList.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{active=files[Number(btn.dataset.i)];renderFiles(files);renderActive()});
+}
+function renderActive(){fileTitle.textContent=active?active.path:'No file';editor.value=active?active.text:''}
+async function main(){
+  const manifest=await readJson('manifest.json'), contents=await readJson('contents.json'), chat=await readJson('chat/history.json').catch(()=>[]);
+  created.textContent=new Date(manifest.created).toLocaleString();
+  tags.innerHTML=[manifest.files.length+' files','Pyodide core','wllama','SmolLM2 Q4_K_M'].map(x=>'<span class="pill">'+esc(x)+'</span>').join('');
+  manifestView.textContent=JSON.stringify(manifest,null,2);
+  active=contents.find(f=>f.path.endsWith('.py'))||contents[0]||null;
+  chatLog.innerHTML=(chat||[]).slice(-6).map(m=>'<div class="msg"><b>'+esc(m.role)+'</b>'+esc(m.content)+'</div>').join('');
+  renderFiles(contents);renderActive();initPython();
+  runBtn.onclick=async()=>{if(!pyodide)return;output.textContent='';try{pyodide.setStdout({batched:appendOut});pyodide.setStderr({batched:appendOut});await pyodide.runPythonAsync(editor.value)}catch(e){appendOut(String(e))}};
+  loadModelBtn.onclick=async()=>{loadModelBtn.disabled=true;try{await initModel();modelStatus.innerHTML='<span class="ok">Bundled model loaded.</span>';askBtn.disabled=false}catch(e){modelStatus.innerHTML='<span class="warn">Model failed:</span> '+esc(e.message);loadModelBtn.disabled=false}};
+  askBtn.onclick=async()=>{answer.textContent='';const q=question.value.trim();const context='Current file: '+(active?.path||'none')+'\\n'+editor.value.slice(0,8000);await complete([{role:'system',content:'You are Codelves running fully offline from a bundled .elf package. Be concise and use the provided workspace content.'},{role:'user',content:context+'\\n\\nQuestion: '+q}],t=>answer.textContent+=t)};
+}
+main().catch(e=>{document.body.innerHTML='<main><pre>Package failed: '+esc(e.message)+'</pre></main>'});
+</script>
+</body>
+</html>`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function escapeScriptJson(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+function downloadBlob(filename, blob) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+}
+
+function codelvesSingleHtml(data) {
+  const payload = escapeScriptJson(data);
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="elf-version" content="0.3">
+<title>${escapeHtml(data.manifest.title)}</title>
+<style>
+:root{--bg:#070808;--panel:#111315;--panel2:#161819;--edge:#252829;--ink:#f4f2ea;--soft:#b9b7ae;--faint:#77756e;--accent:#5fcfb8;--rose:#e87a8a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+header{position:sticky;top:0;z-index:2;background:rgba(7,8,8,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--edge)}
+.bar{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:750;color:var(--accent)}.meta{font:12px ui-monospace,Consolas,monospace;color:var(--faint)}
+main{max-width:1180px;margin:0 auto;padding:28px 20px 54px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px}.sidebar,.panel{border:1px solid var(--edge);background:var(--panel);border-radius:8px}
+.sidebar{position:sticky;top:74px;align-self:start;max-height:calc(100vh - 96px);overflow:auto;padding:10px}.file{display:block;width:100%;text-align:left;border:0;background:transparent;color:var(--soft);padding:8px 10px;border-radius:5px;font:12px ui-monospace,Consolas,monospace;cursor:pointer;overflow:hidden;text-overflow:ellipsis}.file:hover,.file.active{background:var(--panel2);color:var(--ink)}
+.panel{padding:20px;min-width:0}.kicker{font:700 11px ui-monospace,Consolas,monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(30px,5vw,56px);line-height:1.02;letter-spacing:-.05em;margin:10px 0 12px}.grad{background:linear-gradient(110deg,#fff,var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.box{border:1px solid var(--edge);background:#0c0d0e;border-radius:7px;padding:14px}h2{margin:0 0 10px;font-size:18px}.muted{color:var(--soft)}pre,textarea{font:12px/1.65 ui-monospace,Consolas,monospace}pre{white-space:pre-wrap;overflow:auto;color:var(--soft);background:#070808;border:1px solid var(--edge);border-radius:6px;padding:14px;max-height:60vh}textarea{width:100%;min-height:78px;resize:vertical;background:#070808;color:var(--ink);border:1px solid var(--edge);border-radius:6px;padding:10px}
+button.ask{background:var(--accent);color:#04140f;border:0;border-radius:5px;padding:9px 13px;font-weight:750;cursor:pointer;margin-top:8px}.answer{min-height:92px}.pill{display:inline-flex;border:1px solid var(--edge);border-radius:999px;padding:3px 8px;margin:2px;color:var(--faint);font:11px ui-monospace,Consolas,monospace}
+@media(max-width:820px){main{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:220px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div><span class="brand">codelves</span> <span class="meta">portable .elf.html</span></div><div class="meta" id="created"></div></div></header>
+<main>
+  <aside class="sidebar"><div class="kicker">Files</div><div id="fileList"></div></aside>
+  <section class="panel">
+    <div class="kicker">webelves export</div>
+    <h1>Codelves Workspace <span class="grad">portable artifact</span></h1>
+    <p class="muted">This single HTML file contains your workspace files, chat transcript, and safe LLM settings. It opens directly from disk; no server is required.</p>
+    <div id="tags"></div>
+    <div class="grid">
+      <div class="box"><h2>Selected file</h2><pre id="fileView"></pre></div>
+      <div class="box"><h2>Ask the artifact</h2><textarea id="question">What does this workspace contain?</textarea><button class="ask" id="askBtn">Ask locally</button><pre class="answer" id="answer"></pre></div>
+      <div class="box"><h2>Chat history</h2><pre id="chatView"></pre></div>
+      <div class="box"><h2>Manifest</h2><pre id="manifestView"></pre></div>
+    </div>
+  </section>
+</main>
+<script type="application/json" id="elf-data">${payload}</script>
+<script>
+const data = JSON.parse(document.getElementById('elf-data').textContent);
+const files = data.files || [];
+let active = files[0] || null;
+created.textContent = new Date(data.manifest.created).toLocaleString();
+tags.innerHTML = [
+  data.manifest.files.length + ' files',
+  (data.chatHistory || []).length + ' chat messages',
+  data.manifest.model.family,
+  data.manifest.model.mode
+].map(x => '<span class="pill">'+esc(x)+'</span>').join('');
+manifestView.textContent = JSON.stringify(data.manifest, null, 2);
+chatView.textContent = (data.chatHistory || []).map(m => '[' + m.role + '] ' + m.content).join('\\n\\n') || 'No chat history exported.';
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function renderFiles(){
+  fileList.innerHTML = files.map((f,i)=>'<button class="file '+(f===active?'active':'')+'" data-i="'+i+'">'+esc(f.path)+'</button>').join('');
+  fileList.querySelectorAll('button').forEach(btn=>btn.onclick=()=>{active=files[Number(btn.dataset.i)];renderFiles();renderActive()});
+}
+function renderActive(){fileView.textContent = active ? active.text : 'No files exported.'}
+function score(text, words){const low=text.toLowerCase();return words.reduce((s,w)=>s+(low.includes(w)?1:0),0)}
+askBtn.onclick = () => {
+  const q = question.value.trim();
+  const words = q.toLowerCase().split(/\\W+/).filter(Boolean);
+  const ranked = files.map(f => ({ f, score: score(f.path + '\\n' + f.text, words) })).sort((a,b)=>b.score-a.score).slice(0,3);
+  if (!ranked.length) { answer.textContent = 'No files to search.'; return; }
+  answer.textContent = 'Local artifact answer (search-only):\\n\\n' + ranked.map(({f}) => 'From '+f.path+':\\n'+f.text.slice(0,900)).join('\\n\\n---\\n\\n');
+};
+renderFiles();renderActive();
+</script>
+</body>
+</html>`;
 }
 
 function notebookCorpus(seedText) {
@@ -204,7 +392,28 @@ function notebookCorpus(seedText) {
     .map((text, i) => ({ id: `P${i + 1}`, source: 'NotebookELF export', text }));
 }
 
-export async function buildCodelvesElf({ files, chatHistory = [], settings = {}, includeModel = false, includeRuntime = true, onProgress } = {}) {
+export async function buildCodelvesHtml({ files, chatHistory = [], settings = {}, onProgress } = {}) {
+  const manifest = {
+    elf_version: '0.3',
+    type: 'codelves-workspace-html',
+    title: 'Codelves Workspace',
+    created: new Date().toISOString(),
+    files: files.map(f => ({ path: f.path, bytes: new Blob([f.text || '']).size })),
+    chat: { messages: chatHistory.length },
+    settings,
+    model: {
+      mode: 'settings-only',
+      family: settings.localModel || 'HuggingFaceTB/SmolLM2-360M-Instruct',
+      note: 'Single-file HTML exports open directly from disk. Model weights are not embedded in this file.',
+    },
+  };
+  const html = codelvesSingleHtml({ manifest, files, chatHistory });
+  onProgress?.(80, 'Built single-file HTML artifact.');
+  downloadBlob('codelves-workspace.elf.html', new Blob([html], { type: 'text/html;charset=utf-8' }));
+  onProgress?.(100, 'Downloaded codelves-workspace.elf.html');
+}
+
+export async function buildCodelvesElf({ files, chatHistory = [], settings = {}, includeModel = true, includeRuntime = true, onProgress } = {}) {
   const root = 'codelves-workspace';
   const filename = 'codelves-workspace.elf.zip';
   const writer = await openWriter(filename);
@@ -218,9 +427,15 @@ export async function buildCodelvesElf({ files, chatHistory = [], settings = {},
     chat: { path: 'chat/history.json', messages: chatHistory.length },
     settings: { path: 'settings/llm.json' },
     model: modelSpec(includeModel),
+    python: {
+      runtime: 'pyodide',
+      version: '0.27.0',
+      path: 'pyodide/',
+      packages: ['python-stdlib'],
+    },
   };
   const contents = files.map(f => ({ path: f.path, text: f.text || '' }));
-  await zip.addText(`${root}/index.html`, portableViewer('Codelves Workspace', 'Codelves'));
+  await zip.addText(`${root}/index.html`, codelvesOfflineViewer());
   await zip.addText(`${root}/manifest.json`, JSON.stringify(manifest, null, 2));
   await zip.addText(`${root}/contents.json`, JSON.stringify(contents, null, 2));
   await zip.addText(`${root}/chat/history.json`, JSON.stringify(chatHistory, null, 2));
@@ -229,9 +444,10 @@ export async function buildCodelvesElf({ files, chatHistory = [], settings = {},
   const state = { base: 12, current: 0 };
   onProgress?.(state.base, 'Workspace files added.');
   if (includeRuntime) {
-    for (const [path, url] of RUNTIME_FILES) await addUrl(zip, `${root}/${path}`, url, 8, state, onProgress);
+    for (const [path, url] of RUNTIME_FILES) await addUrl(zip, `${root}/${path}`, url, 3, state, onProgress);
+    for (const [path, url] of PYODIDE_FILES) await addUrl(zip, `${root}/${path}`, url, 4, state, onProgress);
   }
-  if (includeModel) await addUrl(zip, `${root}/model/smollm2.gguf`, MODEL_URL, 64, state, onProgress);
+  if (includeModel) await addUrl(zip, `${root}/model/smollm2.gguf`, MODEL_URL, 60, state, onProgress);
   onProgress?.(96, 'Writing ZIP directory...');
   await zip.close();
   onProgress?.(100, `Downloaded ${filename}`);
