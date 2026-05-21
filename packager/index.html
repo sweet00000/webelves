@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELF Packager - webelves</title>
+<meta name="description" content="Build a full offline Codelves .elf ZIP in the browser by bundling the Codelves example, wllama runtime files, and a SmolLM2 GGUF model.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⬡</text></svg>">
+<link rel="stylesheet" href="/css/landing.css">
+<link rel="stylesheet" href="/css/account.css">
+<style>
+  .pack { padding-top: 118px; min-height: 100vh; }
+  .pack-grid { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 24px; align-items: start; }
+  .pack-panel { border: 1px solid var(--border); background: var(--surface); border-radius: 8px; padding: 26px; }
+  .pack-panel h2 { font-size: 24px; letter-spacing: -.02em; margin-bottom: 12px; }
+  .pack-panel p { color: var(--ink-soft); line-height: 1.65; }
+  .pack-list { display: grid; gap: 10px; margin: 22px 0; }
+  .pack-row { display: grid; grid-template-columns: 88px 1fr; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 6px; background: rgba(255,255,255,.02); }
+  .pack-row b { font-family: var(--mono); font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: .12em; }
+  .pack-row span { color: var(--ink-soft); font-size: 14px; line-height: 1.55; }
+  .meter { height: 8px; border-radius: 999px; overflow: hidden; background: var(--bg); border: 1px solid var(--border); margin: 18px 0 10px; }
+  .meter i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #fff); transition: width .15s ease; }
+  .log { height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); padding: 14px; font-family: var(--mono); font-size: 12px; color: var(--ink-soft); white-space: pre-wrap; }
+  .choice { display: grid; gap: 8px; margin: 16px 0 22px; }
+  .choice label { display: flex; gap: 10px; align-items: flex-start; color: var(--ink-soft); font-size: 14px; }
+  .choice input { margin-top: 3px; }
+  .warnbox { border: 1px solid rgba(240,198,116,.35); color: var(--ink-soft); background: rgba(240,198,116,.06); border-radius: 6px; padding: 14px; font-size: 13px; line-height: 1.6; margin-top: 18px; }
+  @media (max-width: 900px) { .pack-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="geo-field" aria-hidden="true"><i class="geo geo-a"></i><i class="geo geo-b"></i><i class="geo geo-c"></i></div>
+
+<header class="nav">
+  <a class="brand" href="/"><span class="brand-mark grad">webelves</span><span class="brand-sub">offline AI</span></a>
+  <nav class="nav-links">
+    <a href="/#products">Products</a>
+    <a href="/about.html">About</a>
+    <a href="/docs/">Docs</a>
+    <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+  </nav>
+  <div class="nav-actions">
+    <a href="/open/ide/" class="btn btn-ghost btn-sm" target="_blank" rel="noopener">Open Codelves →</a>
+  </div>
+</header>
+
+<main class="pack">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">ELF Packager</span>
+      <h1 style="font-size:clamp(38px,5vw,64px);line-height:1.04;letter-spacing:-.05em;margin:12px 0 18px;">Build a full offline <span class="grad">Codelves .elf ZIP.</span></h1>
+      <p>This builder runs in your browser. It downloads SmolLM2 from Hugging Face, adds the wllama runtime and a Codelves example project, then streams a ZIP to your disk. No server-side packing.</p>
+    </div>
+
+    <div class="pack-grid">
+      <section class="pack-panel reveal">
+        <h2>Package contents</h2>
+        <p>The result is a local-first archive. Unzip it, serve the folder with any tiny static server, and open <code>index.html</code>.</p>
+        <div class="pack-list">
+          <div class="pack-row"><b>model</b><span><code>model/smollm2.gguf</code> from HuggingFaceTB/SmolLM2-360M-Instruct-GGUF.</span></div>
+          <div class="pack-row"><b>runtime</b><span>wllama worker + WASM files copied from this site so the package is not dependent on Cloudflare.</span></div>
+          <div class="pack-row"><b>project</b><span>A small Codelves example workspace: Python, README, and a browser demo file.</span></div>
+          <div class="pack-row"><b>settings</b><span>Manifest + model settings: GGUF, Q4_K_M, ChatML, 2048 context, autoload enabled.</span></div>
+        </div>
+        <div class="choice">
+          <label><input id="includeModel" type="checkbox" checked> Include the SmolLM2 GGUF. This is the full offline build and is much larger.</label>
+          <label><input id="includeRuntime" type="checkbox" checked> Include wllama runtime files from this site.</label>
+        </div>
+        <button class="btn btn-fill" id="buildBtn">Build full offline ZIP →</button>
+        <button class="btn btn-ghost" id="liteBtn" style="margin-left:8px;">Build lite ZIP →</button>
+        <div class="warnbox">Best in Chrome or Edge because File System Access lets the ZIP stream directly to disk. Firefox/Safari use an in-memory fallback, which may not handle the full model comfortably.</div>
+      </section>
+
+      <aside class="pack-panel reveal">
+        <h2>Build status</h2>
+        <div class="meter"><i id="bar"></i></div>
+        <div id="summary" style="font-family:var(--mono);font-size:12px;color:var(--ink-faint);margin-bottom:14px;">Ready.</div>
+        <div class="log" id="log"></div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="/shared/account.js"></script>
+<script>
+const MODEL_URL = 'https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q4_k_m.gguf';
+const MODEL_PATH = 'codelves-demo-full/model/smollm2.gguf';
+const RUNTIME = [
+  ['codelves-demo-full/runtime/wllama.worker-CDenxa0H.js', '/open/webelves/assets/wllama.worker-CDenxa0H.js'],
+  ['codelves-demo-full/runtime/wllama-DTxmcCWH.wasm', '/open/webelves/assets/wllama-DTxmcCWH.wasm'],
+  ['codelves-demo-full/runtime/wllama-JeypyGAC.wasm', '/open/webelves/assets/wllama-JeypyGAC.wasm'],
+];
+
+const $ = id => document.getElementById(id);
+function log(msg) { $('log').textContent += msg + '\n'; $('log').scrollTop = $('log').scrollHeight; }
+function progress(pct, msg) { $('bar').style.width = Math.max(0, Math.min(100, pct)) + '%'; if (msg) $('summary').textContent = msg; }
+function enc(s) { return new TextEncoder().encode(s); }
+function u16(n) { const b = new Uint8Array(2); new DataView(b.buffer).setUint16(0, n, true); return b; }
+function u32(n) { const b = new Uint8Array(4); new DataView(b.buffer).setUint32(0, n >>> 0, true); return b; }
+function dosTimeDate(d = new Date()) {
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | Math.floor(d.getSeconds() / 2);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  return { time, date };
+}
+
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c >>> 0;
+  }
+  return t;
+})();
+function crcUpdate(crc, chunk) {
+  let c = crc ^ -1;
+  for (let i = 0; i < chunk.length; i++) c = CRC_TABLE[(c ^ chunk[i]) & 255] ^ (c >>> 8);
+  return (c ^ -1) >>> 0;
+}
+
+class ZipStoreWriter {
+  constructor(writer) { this.writer = writer; this.offset = 0; this.central = []; }
+  async write(bytes) { await this.writer.write(bytes); this.offset += bytes.length; }
+  async writeParts(parts) { for (const p of parts) await this.write(p); }
+  async addStream(path, stream, onChunk = null) {
+    const name = enc(path);
+    const { time, date } = dosTimeDate();
+    const start = this.offset;
+    await this.writeParts([
+      u32(0x04034b50), u16(20), u16(0x0808), u16(0), u16(time), u16(date),
+      u32(0), u32(0), u32(0), u16(name.length), u16(0), name
+    ]);
+    let crc = 0, size = 0;
+    const reader = stream.getReader();
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      const chunk = value instanceof Uint8Array ? value : new Uint8Array(value);
+      crc = crcUpdate(crc, chunk);
+      size += chunk.length;
+      await this.write(chunk);
+      onChunk?.(chunk.length, size);
+    }
+    await this.writeParts([u32(0x08074b50), u32(crc), u32(size), u32(size)]);
+    this.central.push({ path, name, crc, size, start, time, date });
+  }
+  async addText(path, text) {
+    const bytes = enc(text);
+    await this.addStream(path, new Blob([bytes]).stream());
+  }
+  async close() {
+    const cdStart = this.offset;
+    for (const f of this.central) {
+      await this.writeParts([
+        u32(0x02014b50), u16(20), u16(20), u16(0x0808), u16(0), u16(f.time), u16(f.date),
+        u32(f.crc), u32(f.size), u32(f.size), u16(f.name.length), u16(0), u16(0),
+        u16(0), u16(0), u32(0), u32(f.start), f.name
+      ]);
+    }
+    const cdSize = this.offset - cdStart;
+    await this.writeParts([
+      u32(0x06054b50), u16(0), u16(0), u16(this.central.length), u16(this.central.length),
+      u32(cdSize), u32(cdStart), u16(0)
+    ]);
+    await this.writer.close();
+  }
+}
+
+class MemoryWriter {
+  constructor() { this.parts = []; }
+  async write(x) { this.parts.push(x.slice ? x.slice() : x); }
+  async close() {
+    const blob = new Blob(this.parts, { type: 'application/zip' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'codelves-demo-full.elf.zip';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  }
+}
+
+function manifest(includeModel) {
+  return JSON.stringify({
+    elf_version: '0.3-packager-demo',
+    title: 'Codelves Demo Full Offline Package',
+    created: new Date().toISOString(),
+    type: 'codelves-example',
+    model: includeModel ? {
+      type: 'gguf',
+      runtime: 'wllama',
+      path: 'model/smollm2.gguf',
+      source_url: MODEL_URL,
+      family: 'SmolLM2-360M-Instruct',
+      quantization: 'Q4_K_M',
+      chat_template: 'chatml',
+      context_length: 2048,
+      autoload: true
+    } : {
+      type: 'remote-gguf',
+      runtime: 'wllama',
+      source_url: MODEL_URL,
+      autoload: true
+    },
+    project: {
+      files: ['project/README.md', 'project/main.py', 'project/demo.html']
+    }
+  }, null, 2);
+}
+
+function packageIndex() {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codelves Demo ELF</title>
+<style>
+body{margin:0;background:#070808;color:#f4f2ea;font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:980px;margin:0 auto;padding:48px 22px}
+.grad{background:linear-gradient(110deg,#fff,#5fcfb8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.panel{border:1px solid #252829;background:#111315;border-radius:8px;padding:22px;margin:16px 0}
+code,pre{font-family:ui-monospace,Cascadia Code,Consolas,monospace}
+pre{white-space:pre-wrap;color:#b9b7ae;background:#070808;border:1px solid #252829;border-radius:6px;padding:16px}
+.ok{color:#5fcfb8}.muted{color:#9a9890}
+textarea{width:100%;min-height:90px;background:#070808;color:#f4f2ea;border:1px solid #252829;border-radius:6px;padding:12px}
+button{background:#5fcfb8;color:#00110d;border:0;border-radius:5px;padding:10px 14px;font-weight:700;cursor:pointer}
+#answer{min-height:80px}
+</style>
+</head>
+<body>
+<main>
+<p class="muted">webelves .elf package</p>
+<h1>Codelves Demo <span class="grad">offline bundle</span></h1>
+<p>This folder contains a Codelves example project, model settings, wllama runtime files, and optionally a bundled SmolLM2 GGUF.</p>
+<div class="panel"><h2>Status</h2><p id="status">Checking package...</p></div>
+<div class="panel"><h2>Ask the bundled model</h2><textarea id="prompt">Explain what this Codelves demo project does in one paragraph.</textarea><p><button id="ask" disabled>Ask SmolLM2</button></p><pre id="answer"></pre></div>
+<div class="panel"><h2>Model settings</h2><pre id="settings"></pre></div>
+<div class="panel"><h2>Example project</h2><pre id="project"></pre></div>
+<div class="panel"><h2>How to run locally</h2><pre>python -m http.server 8080
+# then open http://localhost:8080/codelves-demo-full/</pre></div>
+</main>
+<script>
+let nextId = 1;
+let worker = null;
+const pending = new Map();
+function startWorker() {
+  worker = new Worker('runtime/wllama.worker-CDenxa0H.js', { type: 'module' });
+  worker.onmessage = e => {
+    const m = e.data;
+    const p = pending.get(m.id);
+    if (m.type === 'progress') document.getElementById('status').textContent = 'Loading model... ' + Math.round((m.pct || 0) * 100) + '%';
+    if (!p) return;
+    if (m.type === 'ready') { pending.delete(m.id); p.resolve(); }
+    if (m.type === 'token') p.onToken && p.onToken(m.token);
+    if (m.type === 'done') { pending.delete(m.id); p.resolve(m.text); }
+    if (m.type === 'error') { pending.delete(m.id); p.reject(new Error(m.error)); }
+  };
+}
+function initModel(path) {
+  startWorker();
+  const id = nextId++;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject });
+    worker.postMessage({ type: 'init', id, modelId: 'local-smollm2', spec: { chunks: [path], contextLength: 2048 } });
+  });
+}
+function complete(messages, onToken) {
+  const id = nextId++;
+  return new Promise((resolve, reject) => {
+    pending.set(id, { resolve, reject, onToken });
+    worker.postMessage({ type: 'complete', id, messages, temperature: 0.35, maxTokens: 280, stop: ['<|im_end|>', '<|im_start|>'] });
+  });
+}
+async function main(){
+  const status = document.getElementById('status');
+  const manifest = await fetch('manifest.json').then(r=>r.json());
+  document.getElementById('settings').textContent = JSON.stringify(manifest.model, null, 2);
+  const project = await fetch('project/main.py').then(r=>r.text());
+  document.getElementById('project').textContent = project;
+  if (manifest.model.path) {
+    const r = await fetch(manifest.model.path);
+    if (!r.ok) throw new Error('Bundled model not found: '+manifest.model.path);
+    const size = Number(r.headers.get('content-length') || 0);
+    status.innerHTML = '<span class="ok">Bundled GGUF found.</span> ' + (size ? Math.round(size/1024/1024)+' MB. ' : '') + 'Loading wllama...';
+    await initModel(manifest.model.path);
+    status.innerHTML = '<span class="ok">Model loaded.</span> Ask the bundled SmolLM2 below.';
+    document.getElementById('ask').disabled = false;
+    document.getElementById('ask').onclick = async () => {
+      const answer = document.getElementById('answer');
+      answer.textContent = '';
+      const q = document.getElementById('prompt').value.trim();
+      await complete([
+        { role: 'system', content: 'You are Codelves inside a portable .elf package. Be concise and explain the bundled project clearly.' },
+        { role: 'user', content: 'Project file main.py:\\n' + project + '\\n\\nQuestion: ' + q }
+      ], t => answer.textContent += t);
+    };
+  } else {
+    status.innerHTML = 'Lite package. First run should fetch: <code>'+manifest.model.source_url+'</code>';
+  }
+}
+main().catch(e=>{document.getElementById('status').textContent='Package check failed: '+e.message});
+</script>
+</body>
+</html>`;
+}
+
+const FILES = {
+  'codelves-demo-full/README.md': `# Codelves Demo ELF
+
+This is a browser-built offline package.
+
+Run it from a local HTTP server:
+
+\`\`\`
+python -m http.server 8080
+\`\`\`
+
+Then open:
+
+\`\`\`
+http://localhost:8080/codelves-demo-full/
+\`\`\`
+
+The manifest contains the model settings needed to load SmolLM2 with wllama.
+`,
+  'codelves-demo-full/project/README.md': `# Example project
+
+This folder is the tiny Codelves workspace bundled into the ELF ZIP.
+`,
+  'codelves-demo-full/project/main.py': `from math import sqrt
+
+def describe(values):
+    mean = sum(values) / len(values)
+    spread = sqrt(sum((x - mean) ** 2 for x in values) / len(values))
+    return mean, spread
+
+data = [2, 3, 5, 8, 13, 21]
+mean, spread = describe(data)
+print("Codelves demo")
+print("mean:", round(mean, 2))
+print("spread:", round(spread, 2))
+`,
+  'codelves-demo-full/project/demo.html': `<h1>Codelves Demo</h1><p>This HTML file is bundled by the ELF Packager.</p>`,
+};
+
+async function openWriter() {
+  if ('showSaveFilePicker' in window) {
+    const handle = await showSaveFilePicker({
+      suggestedName: 'codelves-demo-full.elf.zip',
+      types: [{ description: 'ELF ZIP archive', accept: { 'application/zip': ['.zip'] } }]
+    });
+    return await handle.createWritable();
+  }
+  log('File System Access API unavailable; using in-memory fallback.');
+  return new MemoryWriter();
+}
+
+async function addUrl(zip, path, url, totalWeight, state) {
+  log(`fetch ${url}`);
+  const res = await fetch(url);
+  if (!res.ok || !res.body) throw new Error(`Failed to fetch ${url}: HTTP ${res.status}`);
+  const total = Number(res.headers.get('content-length') || 0);
+  await zip.addStream(path, res.body, (n, done) => {
+    if (total) {
+      state.current = done / total * totalWeight;
+      progress(state.base + state.current, `Downloading ${path.split('/').pop()} (${Math.round(done/1024/1024)} MB)`);
+    }
+  });
+  state.base += totalWeight;
+  state.current = 0;
+  progress(state.base, `Added ${path}`);
+  log(`added ${path}`);
+}
+
+async function build({ full }) {
+  $('buildBtn').disabled = true; $('liteBtn').disabled = true; $('log').textContent = '';
+  progress(0, 'Preparing package...');
+  try {
+    const writer = await openWriter();
+    const zip = new ZipStoreWriter(writer);
+    const includeRuntime = $('includeRuntime').checked;
+    const includeModel = full && $('includeModel').checked;
+    await zip.addText('codelves-demo-full/index.html', packageIndex());
+    await zip.addText('codelves-demo-full/manifest.json', manifest(includeModel));
+    for (const [path, text] of Object.entries(FILES)) await zip.addText(path, text);
+    log('added manifest, index, and example project');
+    const state = { base: 8, current: 0 };
+    progress(state.base, 'Static files added.');
+    if (includeRuntime) {
+      for (const [path, url] of RUNTIME) await addUrl(zip, path, url, 8, state);
+    }
+    if (includeModel) {
+      await addUrl(zip, MODEL_PATH, MODEL_URL, 68, state);
+    }
+    progress(96, 'Writing ZIP directory...');
+    await zip.close();
+    progress(100, 'Done. Download ready.');
+    log('complete: codelves-demo-full.elf.zip');
+  } catch (err) {
+    progress(0, 'Build failed.');
+    log('ERROR: ' + (err.message || String(err)));
+  } finally {
+    $('buildBtn').disabled = false; $('liteBtn').disabled = false;
+  }
+}
+
+$('buildBtn').addEventListener('click', () => build({ full: true }));
+$('liteBtn').addEventListener('click', () => build({ full: false }));
+</script>
+</body>
+</html>
