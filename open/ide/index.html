@@ -401,7 +401,8 @@ header {
   </div>
   <button class="hdr-btn" id="runBtn" onclick="runCode()" disabled title="Ctrl+Enter">▶ Run</button>
   <button class="hdr-btn" id="llmToggle" onclick="toggleLLM()" title="Ctrl+J">✦ LLM</button>
-  <button class="hdr-btn" id="elfExportBtn" onclick="downloadCurrentElf()" title="Export full offline .elf ZIP">ELF</button>
+  <button class="hdr-btn" id="elfExportBtn" onclick="downloadCurrentElf()" title="Export single-file .elf.html">ELF</button>
+  <button class="hdr-btn" id="elfZipExportBtn" onclick="downloadFullOfflineElf()" title="Export full offline .elf ZIP with model and Python">Full ZIP</button>
   <button class="hdr-btn" id="treeToggle" onclick="toggleTree()">☰</button>
   <button class="hdr-btn" onclick="openHelp()" title="How to use">?</button>
   <button class="hdr-btn" onclick="openSettings()" title="Settings">⚙</button>
@@ -2000,7 +2001,30 @@ async function downloadCurrentElf() {
   btn.disabled = true;
   try {
     await saveActive();
-    setStatus('Preparing full offline Codelves .elf export...', 'loading');
+    setStatus('Preparing Codelves .elf.html export...', 'loading');
+    const { buildCodelvesHtml } = await import('/shared/elf-packager.js');
+    const files = await collectWorkspaceFiles();
+    if (!files.length) throw new Error('No files found in the Codelves workspace.');
+    await buildCodelvesHtml({
+      files,
+      chatHistory,
+      settings: exportSettingsSnapshot(),
+      onProgress: (pct, msg) => setStatus(`${Math.round(pct)}% · ${msg}`, 'loading'),
+    });
+    setStatus('Codelves .elf.html export ready', 'ready');
+  } catch (e) {
+    setStatus('ELF export failed: ' + (e.message || String(e)), 'error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function downloadFullOfflineElf() {
+  const btn = document.getElementById('elfZipExportBtn');
+  btn.disabled = true;
+  try {
+    await saveActive();
+    setStatus('Preparing full offline Codelves .elf ZIP...', 'loading');
     const { buildCodelvesElf } = await import('/shared/elf-packager.js');
     const files = await collectWorkspaceFiles();
     if (!files.length) throw new Error('No files found in the Codelves workspace.');
@@ -2012,9 +2036,9 @@ async function downloadCurrentElf() {
       includeRuntime: true,
       onProgress: (pct, msg) => setStatus(`${Math.round(pct)}% · ${msg}`, 'loading'),
     });
-    setStatus('Codelves .elf export ready', 'ready');
+    setStatus('Full offline .elf ZIP export ready', 'ready');
   } catch (e) {
-    setStatus('ELF export failed: ' + (e.message || String(e)), 'error');
+    setStatus('Full ZIP export failed: ' + (e.message || String(e)), 'error');
   } finally {
     btn.disabled = false;
   }
