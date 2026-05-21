@@ -149,13 +149,12 @@
 <div class="hero">
   <div class="hero-text">
     <div class="hero-eyebrow">v1 · client-side inference · no server</div>
-    <h1>Search the web.<br><em>Answer offline.</em><br><span style="color:var(--sky);font-style:italic;font-weight:400;">Zero cloud. Zero leaks.</span></h1>
+    <h1>Search the web.<br><em>Answer privately.</em><br><span style="color:var(--sky);font-style:italic;font-weight:400;">AI runs on your device.</span></h1>
     <p class="hero-sub">
       Webelves is a local-first search engine. Type a query —
-      <strong style="color:var(--ink);">QAi</strong> fetches real sources, extracts passages,
-      ranks them with <code style="color:var(--sky);">MiniLM</code> embeddings, and synthesizes
-      a grounded answer using a GGUF model running entirely in your browser via
-      <code style="color:var(--sky);">wllama</code>. No API key. No cloud call. No data leaving your machine.
+      <strong style="color:var(--ink);">QAi</strong> fetches real web pages, finds the most
+      relevant passages, and generates a grounded answer using an AI model running entirely
+      in your browser. No account. No cloud AI. Nothing leaves your machine.
     </p>
     <div class="hero-ctas">
       <a href="open/webelves/" class="btn-teal" target="_blank" rel="noopener" style="background:var(--sky);">Open Webelves →</a>
@@ -227,11 +226,11 @@
 
 <!-- ════ PRIVACY STRIP ════ -->
 <div style="background:rgba(127,184,230,0.06);border-top:1px solid rgba(127,184,230,0.15);border-bottom:1px solid rgba(127,184,230,0.15);padding:10px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;position:relative;z-index:1;font-size:11px;">
-  <span style="color:var(--sky);font-weight:700;letter-spacing:.05em;">◉ All inference on your machine</span>
-  <span style="color:var(--ink-faint);">✗ No cloud API</span>
-  <span style="color:var(--ink-faint);">✗ No queries transmitted</span>
-  <span style="color:var(--ink-faint);">✓ Inference stays local</span>
-  <span style="color:var(--ink-faint);">✓ Airplane-mode ready</span>
+  <span style="color:var(--sky);font-weight:700;letter-spacing:.05em;">◉ AI runs on your device</span>
+  <span style="color:var(--ink-faint);">✗ No cloud AI service</span>
+  <span style="color:var(--ink-faint);">✗ No cloud queries</span>
+  <span style="color:var(--ink-faint);">✓ Your data stays local</span>
+  <span style="color:var(--ink-faint);">✓ Self-hosted search</span>
 </div>
 
 <!-- ════ MAIN CONTENT ════ -->
@@ -287,12 +286,12 @@
       </div>
       <div class="benefit">
         <div class="benefit-icon">◈</div>
-        <div class="benefit-title">Grounded answers, not hallucinations</div>
+        <div class="benefit-title">Grounded answers, real citations</div>
         <div class="benefit-desc">
-          The LLM only sees the top-ranked passage chunks from the actual pages it
-          fetched. It's prompted to cite inline as <code>[N]</code>. Click a citation —
-          the source card highlights and scrolls into view. Every answer is traceable
-          to a real URL you can inspect.
+          The AI only sees passages from the actual pages it fetched — no making things
+          up. Every claim is cited inline as <code>[N]</code>. Click a citation — the
+          source card highlights and scrolls into view. Every answer traces back to a
+          real URL you can inspect.
         </div>
         <span class="benefit-tag teal">RAG · MiniLM · structured citations</span>
       </div>

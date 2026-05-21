@@ -1,0 +1,5 @@
+# Cloudflare Pages redirects.
+# Model files are too large for Pages (25 MiB limit) — redirect to HuggingFace public CDN.
+# The browser follows the 302, HF serves with CORS *, COEP=credentialless allows it.
+
+/open/notebook/models/default.gguf https://huggingface.co/HuggingFaceTB/SmolLM2-360M-Instruct-GGUF/resolve/main/smollm2-360m-instruct-q4_k_m.gguf 302
