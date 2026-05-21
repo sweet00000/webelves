@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — webelves</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⬡</text></svg>">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/reskin.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+  .about-hero {
+    padding: 120px 40px 56px;
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative; z-index: 1;
+  }
+  @media (max-width: 760px) { .about-hero { padding: 100px 20px 40px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a class="nav-logo" href="/">
+      <span class="nav-logo-mark">webelves</span>
+      <span class="nav-logo-sub">offline AI</span>
+    </a>
+    <div class="nav-links">
+      <a href="/open/notebook/" target="_blank" rel="noopener">NotebookELF</a>
+      <a href="/open/ide/"      target="_blank" rel="noopener">Codelves</a>
+      <a href="about.html" style="color:var(--ink);">About</a>
+      <a href="docs/">Docs</a>
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a class="tab-btn" href="/#products">Products</a>
+    <a class="tab-btn" href="/#pricing">Pricing</a>
+  </div>
+</nav>
+
+<div class="about-hero">
+  <div class="hero-eyebrow">Forge · .elf format · Platform</div>
+  <h1>The synthesis engine<br>and the <span class="ht">format it builds.</span></h1>
+  <p class="hero-sub">Full details on Forge, the .elf format spec, storage internals, and how the platform works.</p>
+</div>
+
+<div style="position:relative;z-index:1;">
+
+<!-- ════ FORGE (TOP) ════ -->
+<section id="foundry">
+  <div class="section-label">Forge — Knowledge synthesis · Ultra</div>
+  <h2>A mini AI trainer <span class="h2-rose">you can run.</span></h2>
+  <p class="lede">Give Forge a list of topics. It writes, grades its own work, discards the weak results, refines the rest, and packages everything into portable <code style="color:var(--teal);">.elf</code> files anyone can open in a browser — offline, forever. No GPU farm needed.</p>
+
+  <div style="margin-top:40px;">
+    <div class="section-label">The four-stage loop</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-num rose">[1] Generate</div>
+        <div class="card-title">Write a draft</div>
+        <div class="card-desc">For each topic, Forge writes a structured knowledge article using whatever model you have — cloud API or fully local.</div>
+      </div>
+      <div class="card">
+        <div class="card-num rose">[2] Judge</div>
+        <div class="card-title">Grade it honestly</div>
+        <div class="card-desc">A discriminator reads the draft and scores it against your quality rubric. Pass or fail, with notes. No vibes — structured grades.</div>
+      </div>
+      <div class="card">
+        <div class="card-num rose">[3] Refine</div>
+        <div class="card-title">Fix what's weak</div>
+        <div class="card-desc">Failed drafts get the critique as new instructions. Loop repeats until the article passes or hits the retry limit.</div>
+      </div>
+      <div class="card">
+        <div class="card-num rose">[4] Package</div>
+        <div class="card-title">Build the .elf file</div>
+        <div class="card-desc">Accepted articles bundle into a portable <code style="color:var(--teal);">.elf</code> — self-contained, shareable, air-gap safe. Open in any browser, forever.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;">
+    <div class="section-label">What you end up with</div>
+    <div class="cards">
+      <div class="card">
+        <div class="card-num teal">[A]</div>
+        <div class="card-title">Portable .elf files</div>
+        <div class="card-desc">Each topic becomes a self-contained knowledge file. Share over USB, email, or LAN — recipient gets a full offline AI chat experience.</div>
+      </div>
+      <div class="card">
+        <div class="card-num teal">[B]</div>
+        <div class="card-title">Training corpus</div>
+        <div class="card-desc">Accepted articles accumulate into a structured dataset — raw material for fine-tuning a small model that generates <code style="color:var(--teal);">.elf</code> files without any cloud API.</div>
+      </div>
+      <div class="card">
+        <div class="card-num teal">[C]</div>
+        <div class="card-title">In-browser AI emitter</div>
+        <div class="card-desc">End goal: a fine-tuned 1–3B model that takes a topic and produces a new <code style="color:var(--teal);">.elf</code> entirely in a browser tab.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px;padding:28px 32px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;max-width:800px;">
+    <div class="section-label" style="margin-bottom:16px;">Open by design</div>
+    <p style="color:var(--ink-soft);font-size:13px;line-height:1.8;margin-bottom:14px;">
+      The <code style="color:var(--teal);">.elf</code> format spec is public. Forge is pure Python — no Node, no cloud dependencies baked in. Run fully offline with a local model. Quality rubrics are configurable YAML files — you set the bar for your domain.
+    </p>
+    <p style="color:var(--ink-soft);font-size:13px;line-height:1.8;">
+      Medical literature, legal documents, private knowledge base — the pieces are all there. Not a hosted service with vendor lock-in. An open pipeline you can run, fork, and extend.
+    </p>
+  </div>
+
+  <div class="waitlist" style="margin-top:40px;">
+    <div class="waitlist-label">Early access · Ultra tier · $50/mo</div>
+    <h3>Get notified when Forge ships.</h3>
+    <div class="waitlist-row">
+      <input type="email" id="emailInput" placeholder="you@domain.com">
+      <button class="btn-paid" onclick="joinWaitlist('emailInput','forge')">Join waitlist</button>
+    </div>
+    <p class="waitlist-note">No spam. One email when the pipeline goes live.</p>
+  </div>
+</section>
+
+<!-- ════ THE FORMAT ════ -->
+<section id="format" style="border-top:1px solid var(--border);">
+  <div class="section-label">The format</div>
+  <h2>What's in a <span class="h2-acc">.elf</span></h2>
+  <p class="lede">A single portable file — HTML in v0.2, ZIP in v1.0 — bundling everything needed to open, browse, and chat with a knowledge base, entirely offline. No server. No install. Open it in any modern browser.</p>
+
+  <div class="cards" style="margin-top:28px;">
+    <div class="card">
+      <div class="card-num">[01]</div>
+      <div class="card-title">Manifest</div>
+      <div class="card-desc">RFC 8785 JCS-canonical JSON. SHA-256 over the manifest = the artifact's identity fingerprint. Same fingerprint forever — auditable without a server.</div>
+    </div>
+    <div class="card">
+      <div class="card-num teal">[02]</div>
+      <div class="card-title">Corpus</div>
+      <div class="card-desc">Articles + passage chunks. Embeddings precomputed and bundled inline. Every answer cites a specific passage in a specific source you provided.</div>
+    </div>
+    <div class="card">
+      <div class="card-num warn">[03]</div>
+      <div class="card-title">Runtime</div>
+      <div class="card-desc">A wllama (GGUF/WASM) or transformers.js (ONNX) bootstrap inlined in the file. Opens a full chat UI on load. No CDN dependency for core functionality.</div>
+    </div>
+    <div class="card">
+      <div class="card-num sky">[04]</div>
+      <div class="card-title">Optional model</div>
+      <div class="card-desc">A small LLM (200MB–1GB) baked in for full offline use, or lazy-fetched for slim "lite" artifacts. The file works without a model — BM25 keyword search still runs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ NOTEBOOKELF ════ -->
+<section id="notebookelf" style="border-top:1px solid var(--border);">
+  <div class="section-label">NotebookELF</div>
+  <h2>NotebookLM-style. <span class="h2-teal">Builds .elf.</span></h2>
+  <p class="lede">A browser studio for producing portable knowledge files. Dashboard of notebook cards — each holds sources, grounded RAG chat with inline citations, and a notes studio. Hit Build and it packages everything into one self-contained .elf file.</p>
+
+  <div class="cards" style="margin-top:28px;">
+    <div class="card">
+      <div class="card-num teal">[01]</div>
+      <div class="card-title">Three-panel workspace</div>
+      <div class="card-desc">Sources panel · Chat panel · Studio panel. Ask anything, teacher cites every answer. Notes are editable and exportable.</div>
+    </div>
+    <div class="card">
+      <div class="card-num teal">[02]</div>
+      <div class="card-title">Structured citations, always</div>
+      <div class="card-desc">Every answer carries machine-readable citation spans — traceable to your exact source passage. Not regex over freeform prose.</div>
+    </div>
+    <div class="card">
+      <div class="card-num teal">[03]</div>
+      <div class="card-title">PDF · paste · URL</div>
+      <div class="card-desc">All processed in-browser via pdf.js and Readability. Content-addressed blobs in OPFS — nothing ever uploaded to a server.</div>
+    </div>
+  </div>
+
+  <details class="plan-block" style="margin-top:28px;">
+    <summary>Phase roadmap</summary>
+    <div class="plan-content">
+      <table class="phase-table">
+        <tr><th>Phase</th><th>Goal</th><th>Status</th></tr>
+        <tr><td class="phase-num">1</td><td>Notebook layer — dashboard, workspace, source migration</td><td class="status-progress">scaffolded</td></tr>
+        <tr><td class="phase-num">2</td><td>Sources ingest UX — file / paste / URL</td><td class="status-progress">partial</td></tr>
+        <tr><td class="phase-num">3</td><td>Auto-generate notebook identity</td><td class="status-todo">not started</td></tr>
+        <tr><td class="phase-num">4</td><td>Chat loop with structured citations</td><td class="status-todo">not started</td></tr>
+        <tr><td class="phase-num">5</td><td>Studio — notes panel</td><td class="status-todo">not started</td></tr>
+        <tr><td class="phase-num">6</td><td>.elf runtime upgrade — citations, source viewer</td><td class="status-todo">not started</td></tr>
+      </table>
+    </div>
+  </details>
+</section>
+
+<!-- ════ STORAGE ════ -->
+<section id="storage" style="border-top:1px solid var(--border);">
+  <div class="section-label">How storage works</div>
+  <h2>Your browser <span class="h2-warn">is the database.</span></h2>
+  <p class="lede">No backend. No database server. No cloud bucket. Your notebooks, files, and artifacts live in browser storage APIs. We cannot access your data even if we wanted to.</p>
+
+  <div class="cards" style="margin-top:28px;">
+    <div class="card">
+      <div class="card-num warn">[OPFS]</div>
+      <div class="card-title">Origin Private File System</div>
+      <div class="card-desc">Notebooks, blobs, and built <code style="color:var(--teal);">.elf</code> outputs. Real filesystem API, scoped to this origin, sandboxed. The browser manages it — not us.</div>
+    </div>
+    <div class="card">
+      <div class="card-num teal">[IDB]</div>
+      <div class="card-title">IndexedDB</div>
+      <div class="card-desc">Structured metadata, workspace state, embedding indexes. Survives restarts. Zero servers involved — Chrome or Firefox IS the database engine.</div>
+    </div>
+    <div class="card">
+      <div class="card-num sky">[LS]</div>
+      <div class="card-title">localStorage</div>
+      <div class="card-desc">Settings, optional API keys, waitlist interest. Never transmitted. Clear any time from browser devtools — we have no copy.</div>
+    </div>
+    <div class="card">
+      <div class="card-num">[ZIP]</div>
+      <div class="card-title">Export anytime</div>
+      <div class="card-desc">Everything in OPFS/IDB exports as a ZIP and re-imports on any machine. Portable because it never belonged to our servers.</div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;padding:16px 20px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--ink-soft);max-width:680px;">
+    <span style="color:var(--warn);font-weight:700;">On clearing browser data:</span>
+    &nbsp;"Clear site data" deletes your notebooks — they live in your browser, not our servers. Export a ZIP backup first.
+  </div>
+</section>
+
+<!-- ════ COMMITMENTS ════ -->
+<section id="commitments" style="border-top:1px solid var(--border);">
+  <div class="section-label">Hard commitments</div>
+  <h2>What we won't compromise on.</h2>
+  <ul style="list-style:none;padding:0;margin-top:20px;">
+    <li style="padding:14px 0;border-bottom:1px solid var(--border-soft);font-size:13px;color:var(--ink-soft);"><span style="color:var(--accent);font-weight:700;">[01]</span>&nbsp;&nbsp; <strong style="color:var(--ink);">No data leaves your machine. Ever.</strong> Model runs in your browser via WASM. Documents, queries, and outputs stay local. No cloud API receives them.</li>
+    <li style="padding:14px 0;border-bottom:1px solid var(--border-soft);font-size:13px;color:var(--ink-soft);"><span style="color:var(--teal);font-weight:700;">[02]</span>&nbsp;&nbsp; Browser-only at the consumer edge. Open a <code style="color:var(--teal);">.elf</code> in any modern browser. No install, no telemetry. Disconnect — it still works.</li>
+    <li style="padding:14px 0;border-bottom:1px solid var(--border-soft);font-size:13px;color:var(--ink-soft);"><span style="color:var(--warn);font-weight:700;">[03]</span>&nbsp;&nbsp; Offline-first. External calls gated by an explicit API key you provide. No key = no cloud call.</li>
+    <li style="padding:14px 0;border-bottom:1px solid var(--border-soft);font-size:13px;color:var(--ink-soft);"><span style="color:var(--sky);font-weight:700;">[04]</span>&nbsp;&nbsp; Manifest is identity. SHA-256 of the canonical manifest = the artifact's fingerprint. Same file, same fingerprint, forever. Auditable without a server.</li>
+    <li style="padding:14px 0;border-bottom:1px solid var(--border-soft);font-size:13px;color:var(--ink-soft);"><span style="color:var(--rose);font-weight:700;">[05]</span>&nbsp;&nbsp; Citations are structured. Machine-readable citation spans — traceable to your original source documents.</li>
+    <li style="padding:14px 0;font-size:13px;color:var(--ink-soft);"><span style="color:var(--ink-faint);font-weight:700;">[06]</span>&nbsp;&nbsp; Forge is Python only. No Node deps. Browser tools stay browser-native.</li>
+  </ul>
+</section>
+
+<!-- ════ WORK WITH US ════ -->
+<section id="work-with-us" style="border-top:1px solid var(--border);">
+  <div class="section-label">Work with us</div>
+  <h2>We're building something <span class="h2-acc">worth building.</span></h2>
+  <p class="lede">Small team. One obsession: AI that belongs to the person running it. No cloud lock-in. No data leaving the machine.</p>
+
+  <div class="cards" style="margin-top:32px;">
+    <div class="card">
+      <div class="card-num acc">[Open]</div>
+      <div class="card-title">Frontend / Browser Platform</div>
+      <div class="card-desc">Solid.js, WASM, OPFS, IndexedDB, Pyodide. You want the browser to do more, not less.</div>
+    </div>
+    <div class="card">
+      <div class="card-num acc">[Open]</div>
+      <div class="card-title">ML Pipeline Engineer</div>
+      <div class="card-desc">Python-first. Local models, data pipelines, opinions on offline fine-tuning. Forge is the project.</div>
+    </div>
+    <div class="card">
+      <div class="card-num">[Soon]</div>
+      <div class="card-title">Technical Writer / Spec Author</div>
+      <div class="card-desc">The .elf spec needs someone who can make it readable, rigorous, and adoptable.</div>
+    </div>
+  </div>
+
+  <div class="waitlist" style="margin-top:40px;border-color:var(--accent);max-width:600px;">
+    <div class="waitlist-label" style="color:var(--accent);">Get in touch</div>
+    <h3>Interested in working together?</h3>
+    <div class="waitlist-row">
+      <input type="email" id="workEmailInput" placeholder="you@domain.com">
+      <button class="btn-primary" onclick="joinWaitlist('workEmailInput','work')">Reach out</button>
+    </div>
+    <p class="waitlist-note">Or email directly: <a href="mailto:mesoscaleffects@gmail.com" style="color:var(--accent);text-decoration:none;">mesoscaleffects@gmail.com</a></p>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <span>© 2026 <span class="footer-logo">webelves</span> — Embedded Language Format</span>
+  <div class="footer-links">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+  </div>
+  <span style="color:var(--ink-faint);">License covers the .elf format &amp; artifacts; subscriptions are not a license.</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script src="js/site.js"></script>
+<script type="module" src="/shared/account.js"></script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webelves — local search</title>
+<meta name="description" content="Perplexity-style local search. wllama GGUF/WASM + MiniLM embeddings + SearXNG. QAi reads the web, grounds answers in real sources — all client-side. No server.">
+<link rel="stylesheet" href="css/site.css">
+<link rel="stylesheet" href="css/reskin.css">
+<link rel="stylesheet" href="css/account.css">
+<style>
+  .back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .14em;
+    color: var(--ink-faint); text-decoration: none;
+    transition: color .2s;
+  }
+  .back-link:hover { color: var(--sky); }
+
+  /* ── SEARCH MOCKUP ── */
+  .hv-chrome {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .hv-titlebar {
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 10px; color: var(--ink-faint);
+  }
+  .hv-titlebar .hv-dots { display: flex; gap: 5px; }
+  .hv-titlebar .hv-dot  { width: 8px; height: 8px; border-radius: 50%; }
+  .hv-titlebar .hv-dot.r { background: #e87a8a; }
+  .hv-titlebar .hv-dot.y { background: #f0c674; }
+  .hv-titlebar .hv-dot.g { background: #5fcfb8; }
+  .hv-titlebar .hv-tabstrip {
+    flex: 1; display: flex; gap: 4px;
+  }
+  .hv-tab {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 3px; padding: 3px 10px;
+    font-size: 9px; color: var(--ink-soft); white-space: nowrap;
+  }
+  .hv-tab.active { background: var(--bg-card2); color: var(--ink); border-color: var(--sky); }
+  .hv-omnibar {
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hv-nav-btns {
+    display: flex; gap: 4px; color: var(--ink-faint); font-size: 9px;
+  }
+  .hv-omnibox {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 6px 10px;
+    color: var(--ink-soft); font-family: inherit; font-size: 11px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hv-omnibox .q { color: var(--ink); }
+  .hv-omnibox .go { color: var(--sky); font-size: 9px; text-transform: uppercase; letter-spacing: .12em; }
+  .hv-action-btns { display: flex; gap: 6px; color: var(--ink-faint); font-size: 10px; }
+  .hv-action-btn  { padding: 4px 8px; border: 1px solid var(--border); border-radius: 3px; cursor: default; }
+  .hv-action-btn.active { color: var(--sky); border-color: var(--sky); background: rgba(127,184,230,.08); }
+
+  .hv-workspace {
+    display: grid; grid-template-columns: 1fr 220px;
+    border-top: 1px solid var(--border);
+    min-height: 220px;
+  }
+  .hv-results {
+    padding: 14px; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .hv-results-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .18em;
+    color: var(--ink-faint); border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 6px; margin-bottom: 2px;
+  }
+  .hv-source {
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .hv-source-num  { font-size: 9px; color: var(--sky); font-weight: 700; }
+  .hv-source-url  { font-size: 9px; color: var(--teal); }
+  .hv-source-text { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+
+  .hv-qai {
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 8px;
+    background: rgba(127,184,230,0.04);
+  }
+  .hv-qai-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: .18em;
+    color: var(--sky); display: flex; align-items: center; gap: 6px;
+  }
+  .hv-qai-label::before { content: '✦'; font-size: 10px; }
+  .hv-qai-text { font-size: 11px; color: var(--ink-soft); line-height: 1.6; }
+  .hv-qai-cite {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border-radius: 3px;
+    border: 1px solid rgba(127,184,230,.4); background: rgba(127,184,230,.12);
+    font-size: 9px; font-weight: 700; color: var(--sky);
+    vertical-align: middle; margin: 0 1px;
+  }
+  .hv-qai-input {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 6px 8px;
+    color: var(--ink-faint); font-size: 10px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: auto;
+  }
+  .hv-qai-send { color: var(--sky); font-size: 9px; text-transform: uppercase; letter-spacing: .12em; }
+  .hv-status {
+    background: var(--bg-soft); border-top: 1px solid var(--border);
+    padding: 5px 14px; font-size: 9px; color: var(--ink-faint);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .hv-status .ready { color: var(--teal); }
+</style>
+</head>
+<body>
+
+<!-- ════ NAV ════ -->
+<nav>
+  <div class="nav-left">
+    <a class="nav-logo" href="index.html">
+      <span class="nav-logo-mark">webelves</span>
+      <span class="nav-logo-sub">offline AI</span>
+    </a>
+    <div class="nav-links">
+      <a href="open/notebook/" target="_blank" rel="noopener">NotebookELF</a>
+      <a href="open/ide/"      target="_blank" rel="noopener">Codelves</a>
+      <a href="about.html">About</a>
+      <a href="docs/">Docs</a>
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a class="tab-btn" href="index.html#products">Products</a>
+    <a class="tab-btn" href="index.html#pricing">Pricing</a>
+  </div>
+</nav>
+
+<!-- ════ HERO ════ -->
+<div class="hero">
+  <div class="hero-text">
+    <div class="hero-eyebrow">v1 · client-side inference · no server</div>
+    <h1>Search the web.<br><em>Answer offline.</em><br><span style="color:var(--sky);font-style:italic;font-weight:400;">Zero cloud. Zero leaks.</span></h1>
+    <p class="hero-sub">
+      Webelves is a local-first search engine. Type a query —
+      <strong style="color:var(--ink);">QAi</strong> fetches real sources, extracts passages,
+      ranks them with <code style="color:var(--sky);">MiniLM</code> embeddings, and synthesizes
+      a grounded answer using a GGUF model running entirely in your browser via
+      <code style="color:var(--sky);">wllama</code>. No API key. No cloud call. No data leaving your machine.
+    </p>
+    <div class="hero-ctas">
+      <a href="open/webelves/" class="btn-teal" target="_blank" rel="noopener" style="background:var(--sky);">Open Webelves →</a>
+      <a href="index.html#webelves" class="btn-ghost">See product overview ↗</a>
+    </div>
+  </div>
+
+  <!-- Search UI mockup -->
+  <div class="hv-chrome">
+    <div class="hv-titlebar">
+      <div class="hv-dots">
+        <div class="hv-dot r"></div>
+        <div class="hv-dot y"></div>
+        <div class="hv-dot g"></div>
+      </div>
+      <div class="hv-tabstrip">
+        <div class="hv-tab active">what is the Fermi paradox?</div>
+        <div class="hv-tab">explain dark matter</div>
+        <div class="hv-tab">+ </div>
+      </div>
+    </div>
+    <div class="hv-omnibar">
+      <div class="hv-nav-btns">← → ↻</div>
+      <div class="hv-omnibox">
+        <span class="q">what is the Fermi paradox?</span>
+        <span class="go">↵</span>
+      </div>
+      <div class="hv-action-btns">
+        <div class="hv-action-btn">⚙</div>
+        <div class="hv-action-btn active">✦ QAi</div>
+      </div>
+    </div>
+    <div class="hv-workspace">
+      <div class="hv-results">
+        <div class="hv-results-label">4 sources</div>
+        <div class="hv-source">
+          <div class="hv-source-num">[1]</div>
+          <div class="hv-source-url">en.wikipedia.org/wiki/Fermi_paradox</div>
+          <div class="hv-source-text">The apparent contradiction between high probability estimates for ET civilizations and the lack of evidence…</div>
+        </div>
+        <div class="hv-source">
+          <div class="hv-source-num">[2]</div>
+          <div class="hv-source-url">space.com/25325-fermi-paradox.html</div>
+          <div class="hv-source-text">Enrico Fermi famously asked "Where is everybody?" in 1950, estimating ET contact should have occurred…</div>
+        </div>
+      </div>
+      <div class="hv-qai">
+        <div class="hv-qai-label">QAi</div>
+        <div class="hv-qai-text">
+          The Fermi paradox is the tension between
+          high-probability estimates for intelligent
+          civilizations <span class="hv-qai-cite">1</span> and the
+          complete absence of observed contact
+          <span class="hv-qai-cite">2</span>. First posed by
+          Fermi in 1950, it remains unresolved.
+        </div>
+        <div class="hv-qai-input">
+          <span>Ask a follow-up…</span>
+          <span class="hv-qai-send">↵</span>
+        </div>
+      </div>
+    </div>
+    <div class="hv-status">
+      <span>wllama · SmolLM2-360M-Instruct</span>
+      <span class="ready">◉ ready</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════ PRIVACY STRIP ════ -->
+<div style="background:rgba(127,184,230,0.06);border-top:1px solid rgba(127,184,230,0.15);border-bottom:1px solid rgba(127,184,230,0.15);padding:10px 40px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;position:relative;z-index:1;font-size:11px;">
+  <span style="color:var(--sky);font-weight:700;letter-spacing:.05em;">◉ All inference on your machine</span>
+  <span style="color:var(--ink-faint);">✗ No cloud API</span>
+  <span style="color:var(--ink-faint);">✗ No queries transmitted</span>
+  <span style="color:var(--ink-faint);">✓ Inference stays local</span>
+  <span style="color:var(--ink-faint);">✓ Airplane-mode ready</span>
+</div>
+
+<!-- ════ MAIN CONTENT ════ -->
+<div style="position:relative;z-index:1;">
+
+  <!-- Features -->
+  <section>
+    <div class="section-label">How it works</div>
+    <h2>Search. Fetch. Rank. <span class="h2-sky">Answer.</span></h2>
+    <p class="lede">Every query goes through a four-stage pipeline — all running in your browser tab, all without a server.</p>
+
+    <div class="cards" style="margin-top:32px;">
+      <div class="card">
+        <div class="card-num sky">[01]</div>
+        <div class="card-title">Search</div>
+        <div class="card-desc"><code style="color:var(--sky);">SearXNGAdapter</code> queries your local SearXNG instance. Pluggable — swap in any <code>SearchAdapter</code> implementation. No tracking, no personalization.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[02]</div>
+        <div class="card-title">Fetch &amp; extract</div>
+        <div class="card-desc">Top 4 result pages fetched in-browser. <code style="color:var(--sky);">@mozilla/readability</code> strips chrome, extracts clean article text. Chunked into passage windows.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[03]</div>
+        <div class="card-title">Rank</div>
+        <div class="card-desc">MiniLM embeddings via <code style="color:var(--sky);">@xenova/transformers</code>. Cosine similarity ranks passages against the query. Top 5 chunks forwarded to the LLM context.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[04]</div>
+        <div class="card-title">Answer</div>
+        <div class="card-desc"><code style="color:var(--sky);">wllama</code> (llama.cpp WASM+SIMD) streams a grounded answer. Prompted to cite sources as <code>[N]</code> — citations are interactive and scroll to the source card.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits -->
+  <section>
+    <div class="section-label">Why Webelves</div>
+    <h2>One engine. <span class="h2-sky">Every tab.</span></h2>
+    <p class="lede">Built around the constraint that loading a GGUF model once and sharing it across sessions is both faster and more honest than pretending each page is independent.</p>
+
+    <div class="benefits" style="margin-top:32px;">
+      <div class="benefit">
+        <div class="benefit-icon">⬡</div>
+        <div class="benefit-title">Shared wllama worker</div>
+        <div class="benefit-desc">
+          One <code style="color:var(--sky);">wllama</code> Worker per page load. All browser tabs share
+          it via <code>runExclusive</code> — no duplicate model loads, no RAM duplication.
+          Pending tabs show a "waiting" badge and queue cleanly. One model download,
+          many parallel searches.
+        </div>
+        <span class="benefit-tag sky">wllama · runExclusive · OPFS cache</span>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-title">Grounded answers, not hallucinations</div>
+        <div class="benefit-desc">
+          The LLM only sees the top-ranked passage chunks from the actual pages it
+          fetched. It's prompted to cite inline as <code>[N]</code>. Click a citation —
+          the source card highlights and scrolls into view. Every answer is traceable
+          to a real URL you can inspect.
+        </div>
+        <span class="benefit-tag teal">RAG · MiniLM · structured citations</span>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">◉</div>
+        <div class="benefit-title">Transparent memory</div>
+        <div class="benefit-desc">
+          After each chat, the model extracts 0–3 durable facts and writes them to
+          <code style="color:var(--sky);">memories.json</code> in OPFS. The full list is visible,
+          editable, and wipeable in Settings — no hidden context, no surprise
+          personalization, no cloud profile.
+        </div>
+        <span class="benefit-tag acc">OPFS · visible · user-controlled</span>
+      </div>
+      <div class="benefit">
+        <div class="benefit-icon">⬡</div>
+        <div class="benefit-title">Pluggable search backend</div>
+        <div class="benefit-desc">
+          <code style="color:var(--sky);">SearchAdapter</code> interface ships with
+          <code>SearXNGAdapter</code>. CORS-proxy and browser-extension adapters
+          are planned for v1.5. Self-host SearXNG, point Webelves at it, keep
+          every query off third-party search infrastructure.
+        </div>
+        <span class="benefit-tag sky">SearXNG · extensible · self-hosted</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Model section -->
+  <section>
+    <div class="section-label">Runtime</div>
+    <h2>GGUF in the browser. <span class="h2-sky">No GPU.</span></h2>
+    <p class="lede">wllama runs llama.cpp compiled to WASM with SIMD extensions. Any quantized GGUF model works. Start with a small, fast model — upgrade when your hardware supports it.</p>
+
+    <div class="cards" style="margin-top:24px;">
+      <div class="card">
+        <div class="card-num sky">[Q4]</div>
+        <div class="card-title">SmolLM2-360M · Default</div>
+        <div class="card-desc">The standard model across webelves. Fast first-token on most machines; downloads once, then runs offline from OPFS.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[Q4]</div>
+        <div class="card-title">Qwen2.5-0.5B · optional</div>
+        <div class="card-desc">Optional alternative. Swap it in from Settings if you prefer it. Same wllama runtime.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[Q4]</div>
+        <div class="card-title">Gemma-3-270M · optional</div>
+        <div class="card-desc">Light-tier variant. Add your own GGUF via Settings — any HuggingFace GGUF URL works.</div>
+      </div>
+      <div class="card">
+        <div class="card-num sky">[Q4]</div>
+        <div class="card-title">Any GGUF · custom URL</div>
+        <div class="card-desc">Point Webelves at any HuggingFace-hosted GGUF URL in Settings. One-time OPFS download, cached locally forever.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Keyboard shortcuts -->
+  <section>
+    <div class="section-label">Keyboard</div>
+    <h2>Browser-native <span class="h2-sky">shortcuts.</span></h2>
+    <p class="lede">Webelves behaves like a browser. Familiar shortcuts work as expected.</p>
+
+    <div style="margin-top:24px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="background:var(--bg-soft);">
+            <th style="text-align:left;padding:10px 18px;font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-faint);font-weight:700;border-bottom:1px solid var(--border);">Shortcut</th>
+            <th style="text-align:left;padding:10px 18px;font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--ink-faint);font-weight:700;border-bottom:1px solid var(--border);">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border-soft);">
+            <td style="padding:10px 18px;color:var(--sky);font-weight:700;">Ctrl + T</td>
+            <td style="padding:10px 18px;color:var(--ink-soft);">New search tab</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border-soft);">
+            <td style="padding:10px 18px;color:var(--sky);font-weight:700;">Ctrl + W</td>
+            <td style="padding:10px 18px;color:var(--ink-soft);">Close active tab</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border-soft);">
+            <td style="padding:10px 18px;color:var(--sky);font-weight:700;">Ctrl + J</td>
+            <td style="padding:10px 18px;color:var(--ink-soft);">Toggle QAi panel</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border-soft);">
+            <td style="padding:10px 18px;color:var(--sky);font-weight:700;">Ctrl + ,</td>
+            <td style="padding:10px 18px;color:var(--ink-soft);">Open Settings</td>
+          </tr>
+          <tr>
+            <td style="padding:10px 18px;color:var(--sky);font-weight:700;">Ctrl + 1–9</td>
+            <td style="padding:10px 18px;color:var(--ink-soft);">Switch to tab N</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section>
+    <div class="section-label">Get started</div>
+    <h2>One click. <span class="h2-sky">No install.</span></h2>
+    <p class="lede">Open Webelves in any modern browser. Set your SearXNG URL in Settings. The model downloads once to OPFS — cached locally, available offline from then on.</p>
+
+    <div style="margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;">
+      <a href="open/webelves/" class="btn-teal" target="_blank" rel="noopener" style="background:var(--sky);">Open Webelves →</a>
+      <a href="index.html#webelves" class="btn-ghost">Product overview ↗</a>
+    </div>
+
+    <div class="terminal" style="margin-top:28px;">
+      <div><span class="t-comment"># self-host SearXNG (required for search)</span></div>
+      <div><span class="t-cmd">docker</span> <span class="t-arg">run</span> -d --name searxng -p 8080:8080 searxng/searxng</div>
+      <div style="margin-top:6px;"><span class="t-comment"># then point Webelves at: http://localhost:8080</span></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <span>© 2026 <span class="footer-logo">webelves</span> — Embedded Language Format</span>
+  <div class="footer-links">
+    <a href="index.html">← webelves home</a>
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+  </div>
+  <span style="color:var(--ink-faint);">License covers the .elf format &amp; artifacts; subscriptions are not a license.</span>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script type="module" src="/shared/account.js"></script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>webelves — offline, portable, private AI</title>
+<meta name="description" content="webelves is the hub for browser-native AI tools that run entirely on your machine. Add sources, chat with grounded citations, run Python, and export portable .elf files. Zero cloud, zero telemetry.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⬡</text></svg>">
+<link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="css/account.css">
+</head>
+<body>
+
+<!-- ════ AMBIENT GEOMETRY (twirling, smoke-faint) ════ -->
+<div class="bg-geo" aria-hidden="true">
+  <svg class="geo g1" viewBox="0 0 120 120"><polygon points="60,4 111,33 111,87 60,116 9,87 9,33"/></svg>
+  <svg class="geo g2" viewBox="0 0 120 120"><polygon points="60,4 111,33 111,87 60,116 9,87 9,33"/><polygon points="60,24 94,43 94,77 60,96 26,77 26,43"/></svg>
+  <svg class="geo g3" viewBox="0 0 120 120"><polygon points="60,8 104,34 104,86 60,112 16,86 16,34"/></svg>
+</div>
+
+<!-- ════ NAV ════ -->
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <span class="brand-mark grad">webelves</span>
+      <span class="brand-sub">offline AI</span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#products">Products</a>
+      <a href="#pricing">Pricing</a>
+      <a href="docs/">Docs</a>
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="/open/notebook/" class="btn btn-fill btn-sm" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<a id="top"></a>
+
+<!-- ════ HERO ════ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="reveal">
+      <div class="badge"><span class="dot"></span> Phase 1 · open spec · runs on your machine</div>
+      <h1>Your AI, <span class="grad">offline and portable.</span></h1>
+      <p class="hero-sub">
+        webelves is the hub for browser-native AI tools. Turn your sources into a grounded
+        chat, run real Python, then export a single <code>.elf</code> file that works in any
+        browser — forever, entirely on your machine.
+      </p>
+      <div class="hero-ctas">
+        <a href="/open/notebook/" class="btn btn-fill" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+        <a href="demos/bayes.elf.html" class="btn btn-ghost" target="_blank" rel="noopener">View a live .elf demo ↗</a>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-v">100%</div><div class="stat-l">Browser-based</div></div>
+        <div class="stat"><div class="stat-v">0</div><div class="stat-l">Installs needed</div></div>
+        <div class="stat"><div class="stat-v">Python</div><div class="stat-l">via Pyodide</div></div>
+        <div class="stat"><div class="stat-v">Open</div><div class="stat-l">Source + spec</div></div>
+      </div>
+    </div>
+
+    <div class="reveal term">
+      <div class="term-bar">
+        <div class="term-dots"><i></i><i></i><i></i></div>
+        <span class="term-file">bayes_theorem.elf.html</span>
+      </div>
+      <div class="term-body">
+        <div class="term-meta"><b>v0.2</b> · 1 model · 24 passages · 3.2 MB · offline-ready</div>
+        <div>
+          <div class="msg-role">You</div>
+          <div class="msg-text">What is the likelihood ratio in Bayes' theorem?</div>
+        </div>
+        <div>
+          <div class="msg-role">ELF</div>
+          <div class="msg-text ans">
+            The likelihood ratio P(E|H)/P(E|¬H) measures how much more probable the evidence
+            is under the hypothesis versus its negation.
+            <span class="cite">[§ Likelihood · passage 7]</span>
+          </div>
+        </div>
+        <div id="termMsgs"></div>
+        <div class="term-status" id="termStatus">SmolLM2 via transformers.js · grounded on an embedded Bayes knowledge base · nothing loaded yet</div>
+        <div class="term-bar-prog" id="termProg" style="display:none"><i></i></div>
+        <button class="btn btn-fill btn-sm term-load" id="termLoad" onclick="elf.load()">Load model &amp; chat →</button>
+        <div class="term-input" id="termInputRow" style="display:none">
+          <input id="termInput" placeholder="Ask about Bayes' theorem…" autocomplete="off">
+          <button class="term-send" id="termSend" onclick="elf.ask()">Send ↵</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRIVACY STRIP ════ -->
+<div class="privacy">
+  <div class="wrap">
+    <span class="yes">◉ Runs on your computer only</span>
+    <span>✗ No cloud inference</span>
+    <span>✗ No data transmitted</span>
+    <span class="yes">✓ Free tools — no account</span>
+    <span>✗ No telemetry</span>
+    <span class="yes">✓ Offline after first load</span>
+  </div>
+</div>
+
+<!-- ════ PRODUCTS ════ -->
+<section id="products" class="section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow">The family</span>
+      <h2>Four tools. <span class="grad">One format.</span></h2>
+      <p>Every tool produces or consumes the same portable <code>.elf</code> file. Start with the free ones — no account, nothing leaves your machine.</p>
+    </div>
+
+    <div class="bento">
+      <div class="tile tile-8 reveal">
+        <div class="tile-head">
+          <span class="tile-name">NotebookELF</span>
+          <span class="tile-tag free">Free</span>
+        </div>
+        <p class="tile-desc">Add sources — PDFs, URLs, paste — chat with grounded citations, then export a self-contained <code>.elf</code>. A three-panel studio (Sources · Chat · Studio) where every answer traces back to a specific passage.</p>
+        <a href="/open/notebook/" class="tile-link" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+      </div>
+
+      <div class="tile tile-4 reveal">
+        <div class="tile-head">
+          <span class="tile-name">Codelves</span>
+          <span class="tile-tag free">Free</span>
+        </div>
+        <p class="tile-desc">Real Python in a browser tab — NumPy, Pandas, Matplotlib, the whole stdlib via Pyodide. Files persist in OPFS. No server, no install.</p>
+        <a href="/open/ide/" class="tile-link" target="_blank" rel="noopener">Open Codelves <span class="arr">→</span></a>
+      </div>
+
+      <div class="tile tile-6 reveal">
+        <div class="tile-head">
+          <span class="tile-name">Webelves</span>
+          <span class="tile-tag">Pro</span>
+        </div>
+        <p class="tile-desc">Perplexity-style search, fully offline. Fetches pages, ranks by embedding similarity, and answers with local GGUF inference — all client-side. No API key, no queries transmitted.</p>
+        <a href="webelves.html" class="tile-link">Full product page <span class="arr">→</span></a>
+      </div>
+
+      <div class="tile tile-6 reveal">
+        <div class="tile-head">
+          <span class="tile-name">Forge</span>
+          <span class="tile-tag">Ultra</span>
+        </div>
+        <p class="tile-desc">An AI synthesis pipeline you can run. Give it topics — it writes, grades, refines, and packages knowledge articles as portable <code>.elf</code> files. Generate → judge → refine → package.</p>
+        <a href="about.html#foundry" class="tile-link">Forge details + waitlist <span class="arr">→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ PRICING ════ -->
+<section id="pricing" class="section">
+  <div class="wrap">
+    <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center;">
+      <span class="eyebrow">Pricing</span>
+      <h2>Start free. <span class="grad">Scale with Forge.</span></h2>
+      <p>Browser tools are free forever. Paid tiers begin where the real cost is — server-side synthesis and hosted compute.</p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier reveal">
+        <div class="tier-badge">Open</div>
+        <div class="tier-name">Open</div>
+        <div class="tier-price">$0<sub>/mo</sub></div>
+        <div class="tier-desc">Free forever · no account</div>
+        <ul>
+          <li>NotebookELF studio</li>
+          <li>Codelves Python IDE</li>
+          <li><code>.elf</code> open format</li>
+          <li class="lock">Webelves search</li>
+          <li class="lock">Forge synthesis</li>
+        </ul>
+        <a href="/open/notebook/" class="btn btn-ghost" target="_blank" rel="noopener">Open free tools →</a>
+      </div>
+
+      <div class="tier feat reveal">
+        <div class="tier-badge">Most popular</div>
+        <div class="tier-name">Pro</div>
+        <div class="tier-price">$20<sub>/mo</sub></div>
+        <div class="tier-desc">Account required · price locks in at signup</div>
+        <ul>
+          <li>Everything in Open</li>
+          <li>Webelves local search</li>
+          <li>Wikiforge: Wikipedia → .elf</li>
+          <li>Autoresearch synthesis</li>
+          <li>Run history + priority queue</li>
+        </ul>
+        <button class="btn btn-fill" onclick="elfAccount.goPro()">Get Pro →</button>
+      </div>
+
+      <div class="tier reveal">
+        <div class="tier-badge">Ultra</div>
+        <div class="tier-name">Ultra</div>
+        <div class="tier-price">$50<sub>/mo</sub></div>
+        <div class="tier-desc">Coming soon</div>
+        <ul>
+          <li>Everything in Pro</li>
+          <li>Forge builder (batch synthesis)</li>
+          <li>Larger model slots (7B+)</li>
+          <li>Discriminator rubrics</li>
+          <li>Webhook callbacks</li>
+        </ul>
+        <button class="btn btn-ghost is-disabled" disabled>Coming soon</button>
+      </div>
+
+      <div class="tier reveal">
+        <div class="tier-badge">Enterprise</div>
+        <div class="tier-name">Enterprise</div>
+        <div class="tier-price">$200<sub>/mo</sub></div>
+        <div class="tier-desc">Custom contracts</div>
+        <ul>
+          <li>Everything in Ultra</li>
+          <li>Self-hosted Forge</li>
+          <li>Team seats + RBAC</li>
+          <li>SLA + dedicated support</li>
+          <li>Air-gapped deployments</li>
+        </ul>
+        <a href="mailto:mesoscaleffects@gmail.com" class="btn btn-ghost">Contact us →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ WAITLIST ════ -->
+<section class="section">
+  <div class="wrap">
+    <div class="waitlist reveal">
+      <span class="eyebrow">Pro · Ultra</span>
+      <h2 style="margin-top:14px;">Get early access</h2>
+      <p>Drop your email and we'll reach out when Pro opens. Price locks in at signup.</p>
+      <div class="waitlist-row">
+        <input id="emailInput" type="email" placeholder="you@example.com" autocomplete="email">
+        <button class="btn btn-fill" onclick="joinWaitlist()">Join →</button>
+      </div>
+      <div class="waitlist-note">No spam. Stored locally in this demo — not sent anywhere yet.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer class="footer">
+  <div class="wrap">
+    <span class="footer-brand">© 2026 <b>webelves</b> — Embedded Language Format · a Codelves project</span>
+    <div class="footer-links">
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+      <a href="about.html">About</a>
+      <a href="docs/">Docs</a>
+      <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+    </div>
+    <span style="color:var(--ink-faint);font-size:12px;">License covers the .elf format &amp; artifacts. Subscriptions fund development — not a license.</span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// nav: glass on scroll + mobile toggle
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 16);
+window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
+
+const links = document.getElementById('navLinks');
+document.getElementById('navToggle').addEventListener('click', () => links.classList.toggle('open'));
+links.querySelectorAll('a').forEach(a => a.addEventListener('click', () => links.classList.remove('open')));
+
+// scroll-reveal
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+// toast
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color || 'var(--accent)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// mock waitlist (localStorage only)
+function joinWaitlist() {
+  const input = document.getElementById('emailInput');
+  const email = input.value.trim();
+  if (!email || !email.includes('@')) { showToast('Enter a valid email', '#e87a8a'); return; }
+  const list = JSON.parse(localStorage.getItem('webelves.waitlist') || '[]');
+  if (!list.includes(email)) list.push(email);
+  localStorage.setItem('webelves.waitlist', JSON.stringify(list));
+  input.value = '';
+  showToast("You're on the list. We'll be in touch.");
+}
+function goWaitlist() {
+  document.getElementById('emailInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => document.getElementById('emailInput').focus(), 500);
+}
+</script>
+
+<!-- ════ HERO ELF ENGINE — transformers.js + SmolLM2, grounded on an embedded Bayes KB ════ -->
+<script type="module">
+import { getGenerator, TextStreamer, isCached } from '/shared/elf-model.js';
+
+// embedded knowledge base — the "elf" payload the model is grounded on
+const KB = [
+  { id:'P1', text:"Bayes' theorem states P(H|E) = P(E|H) * P(H) / P(E). It updates the probability of a hypothesis H after observing evidence E." },
+  { id:'P2', text:"The prior P(H) is the belief before evidence. The posterior P(H|E) is the updated belief after observing evidence E." },
+  { id:'P3', text:"The likelihood P(E|H) is how probable the evidence is assuming the hypothesis is true." },
+  { id:'P4', text:"The likelihood ratio P(E|H)/P(E|not H) measures how much more probable the evidence is under the hypothesis than under its negation; it converts prior odds into posterior odds." },
+  { id:'P5', text:"The evidence P(E) = P(E|H)P(H) + P(E|not H)P(not H) is the marginal probability that normalises the posterior." },
+  { id:'P6', text:"In odds form, posterior odds = prior odds * likelihood ratio, which is convenient for updating beliefs one piece of evidence at a time." },
+];
+function retrieve(q){
+  const qw = new Set((q.toLowerCase().match(/[a-z]+/g)||[]));
+  return KB.map(p=>{
+    const words = p.text.toLowerCase().match(/[a-z]+/g)||[];
+    let s=0; for(const w of words) if(qw.has(w) && w.length>2) s++;
+    return { p, s };
+  }).sort((a,b)=>b.s-a.s).slice(0,2).filter(x=>x.s>0).map(x=>x.p);
+}
+
+const $ = id => document.getElementById(id);
+const setStatus = html => { $('termStatus').innerHTML = html; };
+let gen = null, ready = false, busy = false;
+
+async function load(){
+  if(gen || busy) return; busy = true;
+  $('termLoad').disabled = true; $('termLoad').textContent = 'Loading…';
+  $('termProg').style.display = 'block';
+  try {
+    setStatus(isCached() ? 'Loading SmolLM2 from cache…' : 'Loading SmolLM2 (one-time download, then cached offline)…');
+    gen = await getGenerator((p) => {
+      if (p.status === 'progress' && p.total) {
+        const pct = Math.round(p.loaded / p.total * 100);
+        $('termProg').firstElementChild.style.width = pct + '%';
+        setStatus(`Downloading model… <b>${pct}%</b> <span style="color:var(--ink-faint)">(cached after first load)</span>`);
+      }
+    });
+    ready = true;
+    $('termProg').style.display = 'none';
+    $('termLoad').style.display = 'none';
+    $('termInputRow').style.display = 'flex';
+    setStatus('Model ready · running in your browser');
+    $('termInput').focus();
+  } catch(e){
+    console.error(e);
+    $('termProg').style.display = 'none';
+    $('termLoad').disabled = false; $('termLoad').textContent = 'Retry load →';
+    setStatus(`<span style="color:#e87a8a">Load failed: ${e.message || e}</span>`);
+    gen = null;
+  } finally { busy = false; }
+}
+
+function addMsg(role, text, cls){
+  const m = document.createElement('div');
+  m.innerHTML = `<div class="msg-role">${role}</div><div class="msg-text ${cls||''}"></div>`;
+  m.querySelector('.msg-text').textContent = text;
+  $('termMsgs').appendChild(m);
+  return m.querySelector('.msg-text');
+}
+
+async function ask(){
+  if(!ready || busy) return;
+  const inp = $('termInput'); const q = inp.value.trim(); if(!q) return;
+  inp.value = ''; busy = true; $('termSend').disabled = true; inp.disabled = true;
+  addMsg('You', q);
+  const ctx = retrieve(q);
+  const cites = ctx.map(p=>p.id).join(' · ');
+  const ctxText = (ctx.length ? ctx : KB.slice(0,2)).map(p=>`[${p.id}] ${p.text}`).join('\n');
+  const ansEl = addMsg('ELF', '', 'ans'); ansEl.classList.add('cursor-blink');
+  const messages = [
+    { role: 'system', content: "Answer questions about Bayes' theorem using ONLY the passages. Be concise (2-3 sentences). Cite ids like [P4]." },
+    { role: 'user', content: `Passages:\n${ctxText}\n\nQuestion: ${q}` },
+  ];
+  let out = '';
+  const streamer = new TextStreamer(gen.tokenizer, {
+    skip_prompt: true, skip_special_tokens: true,
+    callback_function: (t) => { out += t; ansEl.textContent = out; },
+  });
+  try {
+    await gen(messages, { max_new_tokens: 200, do_sample: true, temperature: 0.6, top_p: 0.9, streamer });
+  } catch(e){ out = '[error] ' + (e.message || e); ansEl.textContent = out; }
+  ansEl.classList.remove('cursor-blink');
+  ansEl.textContent = (out.trim() || '(no output)');
+  if(cites){ const c = document.createElement('span'); c.className = 'cite'; c.textContent = ` [${cites}]`; ansEl.appendChild(c); }
+  busy = false; $('termSend').disabled = false; inp.disabled = false; inp.focus();
+}
+
+$('termInput').addEventListener('keydown', e => { if(e.key === 'Enter') ask(); });
+window.elf = { load, ask };
+
+// Auto-load: if the model was already downloaded on a previous page/visit, it's
+// in shared Cache Storage — load it instantly without making the user click.
+// First-ever visit still uses the button (no surprise multi-hundred-MB pull).
+if (isCached()) load();
+</script>
+
+<script type="module" src="/shared/account.js"></script>
+</body>
+</html>

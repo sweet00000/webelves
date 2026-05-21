@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transformers.js Diagnostics</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d0e0f; color: #e8e6df; font-family: 'IBM Plex Mono', Consolas, monospace; font-size: 13px; padding: 24px; }
+h1 { color: #ff6b3d; font-size: 16px; margin-bottom: 4px; }
+p  { color: #5a5855; font-size: 11px; margin-bottom: 16px; }
+.row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+button {
+  background: #ff6b3d; color: #000; border: none;
+  padding: 7px 16px; border-radius: 4px; cursor: pointer;
+  font-family: inherit; font-size: 12px; font-weight: 700;
+}
+button:hover { filter: brightness(1.1); }
+button.sec { background: none; border: 1px solid #252829; color: #9a9890; }
+button.sec:hover { border-color: #9a9890; color: #e8e6df; }
+#log { display: flex; flex-direction: column; gap: 6px; }
+.step {
+  border-radius: 5px; padding: 10px 14px;
+  border-left: 3px solid #252829;
+  background: #111315;
+}
+.step.pass    { border-color: #5fcfb8; }
+.step.fail    { border-color: #e87a8a; }
+.step.running { border-color: #f0c674; }
+.step.skip    { border-color: #5a5855; opacity: .6; }
+.step-title { font-size: 12px; font-weight: 700; display: flex; gap: 8px; align-items: center; }
+.step-title .badge {
+  font-size: 10px; padding: 1px 6px; border-radius: 3px;
+  background: #252829; color: #5a5855;
+}
+.step.pass  .badge { background: rgba(95,207,184,.15);  color: #5fcfb8; }
+.step.fail  .badge { background: rgba(232,122,138,.15); color: #e87a8a; }
+.step.running .badge { background: rgba(240,198,116,.15); color: #f0c674; }
+.detail { font-size: 11px; color: #9a9890; margin-top: 5px; white-space: pre-wrap; word-break: break-all; line-height: 1.6; }
+.detail.err { color: #e87a8a; }
+.detail.hint { color: #5fcfb8; }
+</style>
+</head>
+<body>
+<h1>Transformers.js Diagnostics</h1>
+<p>Run in order — each step isolates one failure point. Check console for full stack traces.</p>
+
+<div class="row">
+  <button onclick="runAll()">▶ Run All</button>
+  <button class="sec" onclick="clearLog()">Clear</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.1.0/+esm';
+const MODEL = 'HuggingFaceTB/SmolLM2-135M-Instruct';  // smallest available
+
+// ─── UI helpers ──────────────────────────────────────────────────────────────
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+function addStep(id, title) {
+  const el = document.createElement('div');
+  el.id = 'step-' + id;
+  el.className = 'step';
+  el.innerHTML = `
+    <div class="step-title">
+      <span>${title}</span>
+      <span class="badge">pending</span>
+    </div>`;
+  document.getElementById('log').appendChild(el);
+  return el;
+}
+
+function setState(id, state, detail, isErr, isHint) {
+  const el = document.getElementById('step-' + id);
+  if (!el) return;
+  el.className = 'step ' + state;
+  el.querySelector('.badge').textContent = state;
+  if (detail) {
+    let d = el.querySelector('.detail');
+    if (!d) { d = document.createElement('div'); el.appendChild(d); }
+    d.className = 'detail' + (isErr ? ' err' : isHint ? ' hint' : '');
+    d.textContent = detail;
+  }
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+async function t1_moduleWorker() {
+  addStep('t1', '1 · Module Worker from Blob URL');
+  setState('t1', 'running', 'Creating worker…');
+  try {
+    await withTimeout(new Promise((rs, rj) => {
+      const src = `self.postMessage({type:'ok',msg:'worker alive'});`;
+      const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
+      w.onmessage = e => { w.terminate(); rs(e.data.msg); };
+      w.onerror   = e => { w.terminate(); rj(new Error(e.message || 'onerror')); };
+    }), 5000);
+    setState('t1', 'pass', 'Module workers from Blob URLs work.');
+    return true;
+  } catch (e) {
+    setState('t1', 'fail', e.message, true);
+    addHint('t1', '→ Module Blob workers not supported here. Will try main-thread import instead.');
+    return false;
+  }
+}
+
+async function t2_workerImport() {
+  addStep('t2', '2 · dynamic import(CDN) inside Worker');
+  setState('t2', 'running', 'Importing from CDN…');
+  try {
+    const src = `
+      try {
+        const m = await import('${CDN}');
+        self.postMessage({type:'ok', version: m.env?.version || 'loaded'});
+      } catch(e) {
+        self.postMessage({type:'err', msg: e.message});
+      }
+    `;
+    const result = await withTimeout(new Promise((rs, rj) => {
+      const w = new Worker(URL.createObjectURL(new Blob([src], {type:'text/javascript'})), {type:'module'});
+      w.onmessage = e => { w.terminate(); rs(e.data); };
+      w.onerror   = e => { w.terminate(); rj(new Error(e.message || 'onerror')); };
+    }), 30000);
+    if (result.type === 'err') throw new Error(result.msg);
+    setState('t2', 'pass', 'transformers.js loaded in worker. Version: ' + result.version);
+    return true;
+  } catch (e) {
+    setState('t2', 'fail', e.message, true);
+    addHint('t2', '→ CDN import blocked (Tracking Prevention?). Main-thread mode needed.');
+    return false;
+  }
+}
+
+async function t3_mainImport() {
+  addStep('t3', '3 · dynamic import(CDN) in main thread');
+  setState('t3', 'running', 'Importing transformers.js…');
+  try {
+    const m = await withTimeout(import(CDN), 30000);
+    setState('t3', 'pass', 'Loaded. Version: ' + (m.env?.version || 'unknown'));
+    return m;
+  } catch (e) {
+    setState('t3', 'fail', e.message, true);
+    addHint('t3', '→ Even main-thread import blocked. Check Edge → Settings → Privacy → Tracking Prevention → add exception for this site.');
+    return null;
+  }
+}
+
+async function t4_idb() {
+  addStep('t4', '4 · IndexedDB read/write in main thread');
+  setState('t4', 'running', 'Testing IDB…');
+  try {
+    const db = await new Promise((rs, rj) => {
+      const r = indexedDB.open('_codelves_diag_v1', 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore('t', {keyPath:'k'});
+      r.onsuccess = e => rs(e.target.result);
+      r.onerror   = e => rj(e.target.error);
+    });
+    await new Promise((rs, rj) => {
+      const req = db.transaction('t','readwrite').objectStore('t').put({k:'test', v:42});
+      req.onsuccess = () => rs();
+      req.onerror   = e => rj(e.target.error);
+    });
+    const row = await new Promise((rs, rj) => {
+      const req = db.transaction('t').objectStore('t').get('test');
+      req.onsuccess = e => rs(e.target.result);
+      req.onerror   = e => rj(e.target.error);
+    });
+    if (row?.v !== 42) throw new Error('Wrote 42, read back: ' + JSON.stringify(row));
+    setState('t4', 'pass', 'IDB write+read OK.');
+    return true;
+  } catch (e) {
+    setState('t4', 'fail', e.message, true);
+    addHint('t4', '→ IDB blocked. Enable storage permissions for this site.');
+    return false;
+  }
+}
+
+async function t5_cacheAPI() {
+  addStep('t5', '5 · Cache API (expected to fail in Blob worker context)');
+  setState('t5', 'running', 'Testing Cache API…');
+  try {
+    const c = await caches.open('_codelves_diag');
+    await c.put('https://example.com/__test__', new Response('ok'));
+    await caches.delete('_codelves_diag');
+    setState('t5', 'pass', 'Cache API works. No patch needed.');
+    return true;
+  } catch (e) {
+    setState('t5', 'fail', e.message, true);
+    addHint('t5', '→ Expected on this page — Cache API only broken inside blob workers. Main-thread mode bypasses this entirely.');
+    return false;
+  }
+}
+
+async function t6_pipeline(tfModule) {
+  addStep('t6', '6 · Create pipeline object (no model download)');
+  if (!tfModule) {
+    setState('t6', 'skip', 'Skipped — transformers.js not loaded (test 3 failed).');
+    return null;
+  }
+  setState('t6', 'running', 'Creating text-generation pipeline…');
+  try {
+    const { pipeline, env } = tfModule;
+    env.useBrowserCache = false;  // disable cache entirely for this test
+    // Don't actually load a model — just check the pipeline function exists
+    if (typeof pipeline !== 'function') throw new Error('pipeline is not a function: ' + typeof pipeline);
+    setState('t6', 'pass', 'pipeline() function available. env.useBrowserCache = false set.');
+    return true;
+  } catch (e) {
+    setState('t6', 'fail', e.message, true);
+    return null;
+  }
+}
+
+async function t7_generate(tfModule) {
+  addStep('t7', '7 · Load SmolLM2-135M + generate  [~135 MB download — may take minutes]');
+  if (!tfModule) {
+    setState('t7', 'skip', 'Skipped — transformers.js not loaded.');
+    return;
+  }
+  setState('t7', 'running', 'Downloading model (watch progress below)…');
+  try {
+    const { pipeline, env } = tfModule;
+    env.useBrowserCache = false;
+
+    let lastFile = '';
+    const pipe = await pipeline('text-generation', MODEL, {
+      device: 'wasm',
+      dtype: 'q4',
+      progress_callback: (ev) => {
+        if (ev?.status === 'progress' && ev.progress != null) {
+          const pct = Math.round(ev.progress);
+          setState('t7', 'running', `${ev.file || '?'} … ${pct}%`);
+          lastFile = ev.file || '';
+        } else if (ev?.status === 'ready') {
+          setState('t7', 'running', 'Model files loaded, compiling WASM…');
+        }
+      },
+    });
+
+    setState('t7', 'running', 'Model ready — generating…');
+    const out = await pipe(
+      [{ role: 'user', content: 'Reply with exactly three words.' }],
+      { max_new_tokens: 20, return_full_text: true }
+    );
+
+    const first = Array.isArray(out) ? out[0] : out;
+    const gen   = first?.generated_text;
+    let text = '';
+    if (Array.isArray(gen)) {
+      for (let i = gen.length - 1; i >= 0; i--) {
+        if (gen[i]?.role === 'assistant') { text = gen[i].content; break; }
+      }
+    } else { text = String(gen ?? ''); }
+
+    if (!text && Array.isArray(gen)) text = JSON.stringify(gen);
+
+    setState('t7', 'pass',
+      `Generated: "${text.trim()}"\n\nRaw output structure: ${JSON.stringify(gen).slice(0, 200)}`);
+  } catch (e) {
+    console.error('[t7]', e);
+    setState('t7', 'fail', e.message + '\n\nStack: ' + (e.stack || ''), true);
+    addHint('t7', '→ Check console for full error. Common causes:\n  · OOM (model too large for WASM heap)\n  · WASM SIMD not available\n  · Fetch blocked by CSP or Tracking Prevention');
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function addHint(id, text) {
+  const el = document.getElementById('step-' + id);
+  if (!el) return;
+  const d = document.createElement('div');
+  d.className = 'detail hint';
+  d.textContent = text;
+  el.appendChild(d);
+}
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, rj) => setTimeout(() => rj(new Error(`Timeout after ${ms}ms`)), ms)),
+  ]);
+}
+
+// ─── Main runner ─────────────────────────────────────────────────────────────
+async function runAll() {
+  clearLog();
+  const workerOk  = await t1_moduleWorker();
+  const w2ok      = workerOk ? await t2_workerImport() : false;
+  if (!w2ok && workerOk) {
+    // worker exists but import blocked — note it
+    addStep('t2-note', '  ↳ Worker import blocked: Codelves will fall back to main-thread mode');
+    setState('t2-note', 'skip', '');
+  }
+  const tfModule  = await t3_mainImport();
+  await t4_idb();
+  await t5_cacheAPI();
+  await t6_pipeline(tfModule);
+  await t7_generate(tfModule);
+
+  // Summary
+  const steps = document.querySelectorAll('.step');
+  const pass  = [...steps].filter(s => s.classList.contains('pass')).length;
+  const fail  = [...steps].filter(s => s.classList.contains('fail')).length;
+  const div = document.createElement('div');
+  div.style.cssText = 'margin-top:16px;padding:12px;background:#161819;border-radius:5px;font-size:12px;';
+  div.innerHTML = `<strong style="color:${fail?'#e87a8a':'#5fcfb8'}">Results: ${pass} pass, ${fail} fail</strong>`;
+  document.getElementById('log').appendChild(div);
+}
+</script>
+</body>
+</html>

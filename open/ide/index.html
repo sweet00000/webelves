@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codelves</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root {
+  --bg:        #0d0e0f;
+  --bg-soft:   #111315;
+  --bg-card:   #161819;
+  --bg-card2:  #1c1f21;
+  --border:    #252829;
+  --border-s:  #1a1d1f;
+  --ink:       #e8e6df;
+  --ink-soft:  #9a9890;
+  --ink-faint: #5a5855;
+  --accent:    #ff6b3d;
+  --teal:      #5fcfb8;
+  --sky:       #7fb8e6;
+  --warn:      #f0c674;
+  --rose:      #e87a8a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── HEADER ─────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 14px; height: 44px; flex-shrink: 0;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  color: var(--accent); font-weight: 700; font-size: 14px;
+  text-decoration: none; letter-spacing: -.01em; flex-shrink: 0;
+}
+.logo-sub { color: var(--ink-faint); font-size: 9px; text-transform: uppercase; letter-spacing: .18em; }
+.cur-file-wrap {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1; min-width: 0;
+  padding: 0 10px;
+}
+.cur-file {
+  font-size: 12px; color: var(--ink-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dirty { color: var(--warn); font-size: 10px; }
+.hdr-btn {
+  background: none; border: 1px solid var(--border);
+  color: var(--ink-soft); padding: 4px 10px; border-radius: 4px;
+  font-family: inherit; font-size: 11px; cursor: pointer;
+  transition: all .15s; white-space: nowrap; flex-shrink: 0;
+}
+.hdr-btn:hover { color: var(--ink); border-color: var(--ink-faint); }
+.hdr-btn:disabled { opacity: .35; cursor: not-allowed; }
+.hdr-btn.active { background: var(--bg-card2); border-color: var(--accent); color: var(--accent); }
+#runBtn { color: var(--teal); border-color: var(--teal); }
+#runBtn:hover:not(:disabled) { background: rgba(95,207,184,.1); }
+#runBtn.running { color: var(--warn); border-color: var(--warn); }
+
+/* ─── APP ────────────────────────────────────────────── */
+.app { display: flex; flex: 1; min-height: 0; }
+
+/* ─── FILE TREE ──────────────────────────────────────── */
+.sidebar {
+  width: 210px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg-soft);
+  transition: width .2s;
+  overflow: hidden;
+}
+.sidebar.collapsed { width: 0; border-right: none; }
+
+.tree-head {
+  display: flex; align-items: center; gap: 4px;
+  padding: 0 10px; height: 32px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border-s);
+}
+.tree-label { font-size: 9px; text-transform: uppercase; letter-spacing: .18em; color: var(--ink-faint); flex: 1; }
+.icon-btn {
+  background: none; border: none; color: var(--ink-faint);
+  padding: 3px 5px; border-radius: 3px; cursor: pointer; font-family: inherit; font-size: 14px;
+  transition: color .15s;
+}
+.icon-btn:hover { color: var(--ink); }
+.tree-body { flex: 1; overflow-y: auto; padding: 4px 0; }
+.tree-entry {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 12px; cursor: pointer; font-size: 11px;
+  color: var(--ink-soft); white-space: nowrap; overflow: hidden;
+  transition: background .1s;
+  user-select: none;
+}
+.tree-entry:hover { background: var(--bg-card); }
+.tree-entry.active { background: var(--bg-card2); color: var(--ink); }
+.tree-entry.folder { color: var(--warn); }
+.tree-icon { font-size: 10px; flex-shrink: 0; }
+.tree-name { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+.tree-entry .tree-del {
+  display: none; background: none; border: none;
+  color: var(--rose); padding: 0 2px; cursor: pointer; font-size: 11px;
+}
+.tree-entry:hover .tree-del { display: block; }
+.tree-sub { padding-left: 14px; }
+
+/* ─── MAIN ────────────────────────────────────────────── */
+.main {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+
+/* tab strip */
+.tab-strip {
+  display: flex; align-items: stretch; gap: 0;
+  background: var(--bg-soft); border-bottom: 1px solid var(--border);
+  height: 32px; flex-shrink: 0; overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-strip::-webkit-scrollbar { display: none; }
+.tab {
+  display: flex; align-items: center; gap: 6px;
+  padding: 0 12px; font-size: 11px; cursor: pointer;
+  color: var(--ink-faint); border-right: 1px solid var(--border-s);
+  white-space: nowrap; transition: background .1s;
+  min-width: 80px;
+}
+.tab:hover { background: var(--bg-card); color: var(--ink-soft); }
+.tab.active { background: var(--bg); color: var(--ink); border-bottom: 2px solid var(--accent); }
+.tab-close {
+  background: none; border: none; color: var(--ink-faint);
+  padding: 0 2px; cursor: pointer; font-size: 12px; line-height: 1;
+  border-radius: 2px;
+}
+.tab-close:hover { color: var(--rose); }
+.tab-dirty { color: var(--warn); font-size: 9px; }
+
+/* editor + output split */
+.editor-area {
+  flex: 1; display: flex; min-height: 0;
+  position: relative;
+}
+.line-nums {
+  width: 44px; flex-shrink: 0; overflow: hidden;
+  background: var(--bg); border-right: 1px solid var(--border-s);
+  padding: 14px 8px 14px 0;
+  text-align: right; font-size: 12px; line-height: 1.65;
+  color: var(--ink-faint); user-select: none;
+}
+.line-nums div { height: 1.65em; }
+#editor {
+  flex: 1; background: var(--bg); color: var(--ink);
+  border: none; outline: none; resize: none;
+  font-family: 'IBM Plex Mono', 'Consolas', monospace;
+  font-size: 13px; line-height: 1.65;
+  padding: 14px 18px; tab-size: 4;
+  min-width: 0; min-height: 0;
+}
+#editor::selection { background: rgba(95,207,184,.18); }
+
+.resize-h {
+  height: 5px; background: var(--border); flex-shrink: 0;
+  cursor: ns-resize; transition: background .15s;
+}
+.resize-h:hover, .resize-h.dragging { background: var(--accent); }
+
+.output-area {
+  height: 200px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+.panel-head {
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; height: 28px;
+  background: var(--bg-soft); border-bottom: 1px solid var(--border-s); flex-shrink: 0;
+}
+.panel-label { font-size: 9px; text-transform: uppercase; letter-spacing: .18em; color: var(--ink-faint); flex: 1; }
+.mini-btn {
+  background: none; border: none; color: var(--ink-faint);
+  font-family: inherit; font-size: 10px; cursor: pointer;
+  padding: 2px 6px; border-radius: 3px;
+  transition: color .15s;
+}
+.mini-btn:hover { color: var(--ink); }
+#output {
+  flex: 1; overflow-y: auto; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.out-line { font-size: 12px; white-space: pre-wrap; word-break: break-all; line-height: 1.55; }
+.out-line.stdout { color: var(--ink); }
+.out-line.stderr { color: var(--rose); }
+.out-line.info   { color: var(--ink-faint); font-style: italic; }
+.out-line.ok     { color: var(--teal); }
+.out-line.img    { margin: 4px 0; }
+.out-line.img img { max-width: 100%; border: 1px solid var(--border); border-radius: 4px; }
+
+/* ─── LLM PANEL ──────────────────────────────────────── */
+.llm-panel {
+  width: 300px; flex-shrink: 0; display: flex; flex-direction: column;
+  border-left: 1px solid var(--border);
+  transition: width .2s;
+  overflow: hidden;
+}
+.llm-panel.collapsed { width: 0; border-left: none; }
+
+.llm-panel > .panel-head { height: 32px; }
+.llm-model-badge {
+  font-size: 9px; color: var(--sky);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 120px;
+}
+.llm-thread {
+  flex: 1; overflow-y: auto; padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.msg { display: flex; flex-direction: column; gap: 3px; max-width: 88%; }
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.assistant { align-self: flex-start; }
+.msg-role { font-size: 9px; text-transform: uppercase; letter-spacing: .15em; color: var(--ink-faint); }
+.msg-body {
+  font-size: 12px; line-height: 1.6; color: var(--ink-soft);
+  background: var(--bg-card); border: 1px solid var(--border-s);
+  border-radius: 6px; padding: 8px 10px;
+  white-space: pre-wrap; word-break: break-word;
+}
+.msg.user .msg-body { background: var(--bg-card2); border-color: var(--border); color: var(--ink); }
+.msg-body code { color: var(--teal); background: var(--bg); padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+.msg-body pre { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 8px; margin: 6px 0; overflow-x: auto; }
+.msg-body pre code { background: none; padding: 0; }
+.llm-typing { display: flex; gap: 4px; padding: 8px 10px; }
+.llm-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-faint); animation: bounce .8s ease infinite; }
+.llm-typing span:nth-child(2) { animation-delay: .15s; }
+.llm-typing span:nth-child(3) { animation-delay: .30s; }
+@keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+
+.llm-foot {
+  border-top: 1px solid var(--border); padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ctx-row {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 10px; color: var(--ink-faint);
+}
+.ctx-row input[type=checkbox] { accent-color: var(--accent); }
+.llm-form {
+  display: flex; gap: 6px; align-items: flex-end;
+}
+#llmInput {
+  flex: 1; background: var(--bg-card2); border: 1px solid var(--border);
+  color: var(--ink); padding: 7px 10px; border-radius: 4px;
+  font-family: inherit; font-size: 12px;
+  resize: none; outline: none; min-height: 36px; max-height: 120px;
+  line-height: 1.5;
+}
+#llmInput:focus { border-color: var(--accent); }
+#llmSend {
+  background: var(--accent); color: #000; border: none;
+  width: 32px; height: 32px; border-radius: 4px;
+  font-family: inherit; font-size: 14px; cursor: pointer;
+  transition: filter .15s; flex-shrink: 0;
+}
+#llmSend:hover { filter: brightness(1.15); }
+#llmSend:disabled { background: var(--bg-card2); color: var(--ink-faint); cursor: not-allowed; }
+
+/* ─── STATUS BAR ─────────────────────────────────────── */
+.status-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 14px; height: 22px; flex-shrink: 0;
+  background: var(--bg-soft); border-top: 1px solid var(--border);
+  font-size: 10px; color: var(--ink-faint);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--rose); flex-shrink: 0; }
+.status-dot.ready { background: var(--teal); }
+.status-dot.loading { background: var(--warn); animation: pulse 1s ease infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+#statusText { flex: 1; }
+.kbd-hint { margin-left: auto; color: var(--ink-faint); }
+.kbd-hint kbd {
+  background: var(--bg-card2); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 3px; font-family: inherit; font-size: 9px;
+}
+
+/* ─── MODAL ──────────────────────────────────────────── */
+.overlay[hidden] { display: none !important; }
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,.7); display: flex;
+  align-items: center; justify-content: center;
+}
+.modal {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; width: 400px; max-width: calc(100vw - 40px);
+  display: flex; flex-direction: column;
+}
+.modal-head {
+  display: flex; align-items: center; padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 700;
+}
+.modal-head span { flex: 1; }
+.modal-close {
+  background: none; border: none; color: var(--ink-faint);
+  font-size: 16px; cursor: pointer; padding: 0 4px;
+}
+.modal-close:hover { color: var(--ink); }
+.modal-body { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field > span { font-size: 10px; text-transform: uppercase; letter-spacing: .15em; color: var(--ink-faint); }
+.field input, .field select {
+  background: var(--bg); border: 1px solid var(--border); color: var(--ink);
+  padding: 8px 10px; border-radius: 4px; font-family: inherit; font-size: 12px; outline: none;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.modal-foot { padding: 12px 18px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+.btn-primary {
+  background: var(--accent); color: #000; border: none;
+  padding: 8px 18px; border-radius: 4px; font-family: inherit; font-size: 12px;
+  font-weight: 700; cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(1.1); }
+.btn-ghost {
+  background: none; border: 1px solid var(--border); color: var(--ink-soft);
+  padding: 8px 14px; border-radius: 4px; font-family: inherit; font-size: 12px; cursor: pointer;
+}
+.btn-ghost:hover { border-color: var(--ink-faint); color: var(--ink); }
+
+/* ─── HELP MODAL ────────────────────────────────────── */
+.help-section { display: flex; flex-direction: column; gap: 8px; }
+.help-title {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .18em;
+  color: var(--ink-faint); padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-s);
+}
+.help-grid {
+  display: grid; grid-template-columns: 130px 1fr;
+  gap: 7px 12px; align-items: start;
+}
+.help-key {
+  font-size: 11px; color: var(--teal);
+  display: flex; align-items: center; gap: 4px;
+}
+.help-key kbd {
+  background: var(--bg-card2); border: 1px solid var(--border);
+  padding: 2px 6px; border-radius: 3px; font-family: inherit;
+  font-size: 10px; color: var(--sky);
+}
+.help-desc { font-size: 11px; color: var(--ink-soft); line-height: 1.55; }
+.help-desc code {
+  background: var(--bg); border: 1px solid var(--border-s);
+  padding: 1px 5px; border-radius: 3px; color: var(--teal); font-size: 10px;
+}
+
+/* ─── SCROLLBARS ─────────────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── LOCAL PROGRESS ─────────────────────────────────── */
+.llm-progress {
+  padding: 8px 12px; border-bottom: 1px solid var(--border-s);
+  display: flex; flex-direction: column; gap: 5px;
+}
+.llm-progress-label { font-size: 10px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.llm-progress-track { height: 3px; background: var(--border); border-radius: 2px; }
+.llm-progress-bar { height: 100%; width: 0%; background: var(--accent); border-radius: 2px; transition: width .2s; }
+
+/* ─── RESPONSIVE ─────────────────────────────────────── */
+@media (max-width: 700px) {
+  .sidebar { width: 0; }
+  .sidebar.open { width: 200px; position: absolute; z-index: 10; height: 100%; top: 44px; }
+  .llm-panel { width: 0; }
+  .llm-panel.open { width: 100%; position: absolute; z-index: 10; height: calc(100% - 44px - 22px); top: 44px; }
+}
+
+.empty-editor {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-faint); font-size: 12px; pointer-events: none;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="../../">codelves</a>
+  <span class="logo-sub">IDE</span>
+  <div class="cur-file-wrap">
+    <span class="cur-file" id="curFile">no file open</span>
+    <span class="dirty" id="dirtyDot" hidden>●</span>
+  </div>
+  <button class="hdr-btn" id="runBtn" onclick="runCode()" disabled title="Ctrl+Enter">▶ Run</button>
+  <button class="hdr-btn" id="llmToggle" onclick="toggleLLM()" title="Ctrl+J">✦ LLM</button>
+  <button class="hdr-btn" id="treeToggle" onclick="toggleTree()">☰</button>
+  <button class="hdr-btn" onclick="openHelp()" title="How to use">?</button>
+  <button class="hdr-btn" onclick="openSettings()" title="Settings">⚙</button>
+</header>
+
+<div class="app">
+
+  <!-- File tree -->
+  <aside class="sidebar" id="sidebar">
+    <div class="tree-head">
+      <span class="tree-label">Files</span>
+      <button class="icon-btn" onclick="newFile()" title="New file">＋</button>
+      <button class="icon-btn" onclick="newFolder()" title="New folder">⊕</button>
+    </div>
+    <div class="tree-body" id="treeBody"></div>
+  </aside>
+
+  <!-- Editor + output -->
+  <div class="main">
+    <div class="tab-strip" id="tabStrip"></div>
+
+    <div class="editor-area" id="editorArea">
+      <div class="line-nums" id="lineNums"></div>
+      <textarea id="editor" spellcheck="false"></textarea>
+      <div class="empty-editor" id="emptyHint">Open a file to start editing</div>
+    </div>
+
+    <div class="resize-h" id="resizeH"></div>
+
+    <div class="output-area" id="outputArea">
+      <div class="panel-head">
+        <span class="panel-label">Output</span>
+        <button class="mini-btn" onclick="clearOutput()">Clear</button>
+      </div>
+      <div id="output"></div>
+    </div>
+  </div>
+
+  <!-- LLM panel -->
+  <aside class="llm-panel collapsed" id="llmPanel">
+    <div class="panel-head">
+      <span class="panel-label">✦ LLM</span>
+      <span class="llm-model-badge" id="llmModelBadge">—</span>
+      <button class="mini-btn" onclick="clearChat()">Clear</button>
+    </div>
+    <div class="llm-progress" id="llmProgress" hidden>
+      <div class="llm-progress-label" id="llmProgressLabel">Loading…</div>
+      <div class="llm-progress-track"><div class="llm-progress-bar" id="llmProgressBar"></div></div>
+    </div>
+    <div class="llm-thread" id="llmThread"></div>
+    <div class="llm-foot">
+      <div class="ctx-row" id="wllamaRow" hidden style="justify-content:space-between;">
+        <span id="wllamaModelLabel" style="font-size:10px;color:var(--ink-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;">No model</span>
+        <button class="mini-btn" style="color:var(--accent);border:1px solid var(--border);padding:2px 8px;border-radius:3px;flex-shrink:0;" onclick="pickGGUF()">⇧ Pick GGUF</button>
+      </div>
+      <div class="ctx-row">
+        <input type="checkbox" id="injectCtx" checked>
+        <label for="injectCtx">inject current file as context</label>
+      </div>
+      <form class="llm-form" id="llmForm">
+        <textarea id="llmInput" placeholder="Ask about your code…" rows="2"></textarea>
+        <button type="submit" id="llmSend">↵</button>
+      </form>
+    </div>
+  </aside>
+
+</div>
+
+<div class="status-bar">
+  <div class="status-dot loading" id="statusDot"></div>
+  <span id="statusText">Loading Pyodide…</span>
+  <span class="kbd-hint"><kbd>Ctrl+Enter</kbd> run &nbsp; <kbd>Ctrl+S</kbd> save &nbsp; <kbd>Ctrl+J</kbd> LLM</span>
+</div>
+
+<!-- Help -->
+<div class="overlay" id="helpOverlay" hidden>
+  <div class="modal" style="width:480px;">
+    <div class="modal-head">
+      <span>How to use Codelves</span>
+      <button class="modal-close" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="modal-body" style="gap:16px;">
+      <div class="help-section">
+        <div class="help-title">Three panels</div>
+        <div class="help-grid">
+          <span class="help-key">☰ Files</span><span class="help-desc">OPFS file system — persists in your browser. Create, open, delete files and folders.</span>
+          <span class="help-key">Editor</span><span class="help-desc">Write Python (or any text). Open files appear as tabs. Unsaved changes shown with ●</span>
+          <span class="help-key">✦ LLM</span><span class="help-desc">Ask your local Ollama or Gemini API about the open file. Toggle with the LLM button.</span>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-title">Keyboard shortcuts</div>
+        <div class="help-grid">
+          <span class="help-key"><kbd>Ctrl+Enter</kbd></span><span class="help-desc">Run current file with Pyodide</span>
+          <span class="help-key"><kbd>Ctrl+S</kbd></span><span class="help-desc">Save file to OPFS</span>
+          <span class="help-key"><kbd>Ctrl+J</kbd></span><span class="help-desc">Toggle LLM chat panel</span>
+          <span class="help-key"><kbd>Tab</kbd></span><span class="help-desc">Insert 4 spaces</span>
+        </div>
+      </div>
+      <div class="help-section">
+        <div class="help-title">LLM setup</div>
+        <div class="help-grid">
+          <span class="help-key">LM Studio</span><span class="help-desc">Load any GGUF in LM Studio → start local server → copy model name into ⚙ Settings. Port 1234.</span>
+          <span class="help-key">Ollama</span><span class="help-desc">Run <code>ollama serve</code> locally. Default model: <code>qwen2.5-coder:7b</code>. No API key needed.</span>
+          <span class="help-key">Gemini</span><span class="help-desc">Paste your API key in ⚙ Settings. Uses <code>gemini-2.0-flash</code> by default.</span>
+          <span class="help-key">wllama</span><span class="help-desc"><strong>Recommended.</strong> Pick any <code>.gguf</code> — cached in IndexedDB after first load. Real token streaming. Works with LM Studio downloads.</span>
+          <span class="help-key">transformers.js</span><span class="help-desc">Downloads ONNX model from HuggingFace (~300MB). No file needed, but slower and heavier than GGUF.</span>
+          <span class="help-key">Inject file</span><span class="help-desc">Checkbox in LLM panel sends the open file as context with every message.</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-primary" onclick="closeHelp()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="overlay" id="settingsOverlay" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <span>Settings</span>
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="field">
+        <span>LLM Provider</span>
+        <select id="providerSel" onchange="onProviderChange()">
+          <option value="local">transformers.js · ONNX in-browser (auto-fallback)</option>
+          <option value="wllama">wllama · GGUF in-browser</option>
+          <option value="lmstudio">LM Studio · localhost:1234</option>
+          <option value="ollama">Ollama · localhost:11434</option>
+          <option value="gemini">Gemini API (cloud)</option>
+        </select>
+      </label>
+      <div id="wllamaFields" hidden>
+        <div class="field">
+          <span>GGUF Model</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span id="wllamaSettingsLabel" style="font-size:11px;color:var(--ink-soft);flex:1;overflow:hidden;text-overflow:ellipsis;">No model loaded</span>
+            <button class="btn-ghost" style="padding:4px 10px;font-size:11px;flex-shrink:0;" onclick="pickGGUF()">⇧ Pick GGUF file</button>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--ink-faint);line-height:1.6;">
+          Pick any <code style="color:var(--teal)">.gguf</code> — from LM Studio, llama.cpp, or HuggingFace.<br>
+          Cached in IndexedDB. No re-download after first pick. Real token streaming.
+        </div>
+      </div>
+      <div id="lmstudioFields" hidden>
+        <label class="field">
+          <span>LM Studio URL</span>
+          <input type="text" id="lmstudioUrl" placeholder="http://localhost:1234">
+        </label>
+        <label class="field">
+          <span>Model (from LM Studio)</span>
+          <input type="text" id="lmstudioModel" placeholder="local-model">
+        </label>
+        <div style="font-size:10px;color:var(--ink-faint);line-height:1.6;">
+          Load any model in LM Studio → start local server → paste model name above.
+        </div>
+      </div>
+      <div id="ollamaFields" hidden>
+        <label class="field">
+          <span>Ollama Base URL</span>
+          <input type="text" id="ollamaUrl" placeholder="http://localhost:11434">
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <input type="text" id="ollamaModel" placeholder="qwen2.5-coder:7b">
+        </label>
+      </div>
+      <div id="geminiFields" hidden>
+        <label class="field">
+          <span>Gemini API Key</span>
+          <input type="password" id="geminiKey" placeholder="AIza…">
+        </label>
+        <label class="field">
+          <span>Model</span>
+          <input type="text" id="geminiModel" placeholder="gemini-2.0-flash">
+        </label>
+      </div>
+      <div id="localFields" hidden>
+        <label class="field">
+          <span>HuggingFace Model ID</span>
+          <input type="text" id="localModel" placeholder="HuggingFaceTB/SmolLM2-360M-Instruct">
+        </label>
+        <div style="font-size:10px;color:var(--ink-faint);line-height:1.6;">
+          Downloaded once, cached in browser. Runs fully offline after first load.<br>
+          Suggested: <code style="color:var(--teal)">HuggingFaceTB/SmolLM2-360M-Instruct</code><br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<code style="color:var(--teal)">Qwen/Qwen2.5-Coder-0.5B-Instruct</code>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
+      <button class="btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js"></script>
+<script>
+'use strict';
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let pyodide = null;
+let fsRoot = null;
+let openTabs = [];        // {name, path, dirHandle, fileHandle, content, dirty}
+let activeIdx = -1;
+let chatHistory = [];     // {role, content}
+let llmBusy = false;
+let savePending = null;
+
+const SETTINGS_KEY = 'codelves:v1:settings';
+const DEF_SETTINGS = {
+  llmProvider: 'local',
+  wllamaModelKey: '',
+  wllamaModelName: '',
+  ollamaUrl: 'http://localhost:11434',
+  ollamaModel: 'qwen2.5-coder:7b',
+  lmstudioUrl: 'http://localhost:1234',
+  lmstudioModel: 'local-model',
+  geminiKey: '',
+  geminiModel: 'gemini-2.0-flash',
+  localModel: 'HuggingFaceTB/SmolLM2-360M-Instruct',
+};
+
+function loadSettings() {
+  try { return { ...DEF_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}') }; }
+  catch { return { ...DEF_SETTINGS }; }
+}
+let cfg = loadSettings();
+
+const DEFAULT_PY = `import sys
+print(f"Python {sys.version}")
+print("Hello from Codelves!")
+
+# Numpy example
+import numpy as np
+arr = np.linspace(0, 2 * np.pi, 8)
+print("sin values:", np.round(np.sin(arr), 3))
+`;
+
+// ─── WLLAMA WORKER (GGUF, from webelves pipeline) ────────────────────────────
+const WLLAMA_WORKER_SRC = `
+// document.baseURI polyfill — wllama internals need it in worker context
+if (typeof self.document === 'undefined') {
+  self.document = { baseURI: self.location.href };
+}
+
+const WLLAMA_CDN  = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/esm/index.js';
+const WLLAMA_WASM = 'https://cdn.jsdelivr.net/npm/@wllama/wllama@2.3.7/esm/';
+const GGUF_DB    = 'codelves_gguf_v1';
+const GGUF_STORE = 'models';
+
+let wllama = null, loadedKey = null;
+
+function openGGUFDB() {
+  return new Promise((rs, rj) => {
+    const r = indexedDB.open(GGUF_DB, 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore(GGUF_STORE, { keyPath: 'key' });
+    r.onsuccess = e => rs(e.target.result);
+    r.onerror = e => rj(e.target.error);
+  });
+}
+async function ggufGet(key) {
+  const db = await openGGUFDB();
+  return new Promise((rs, rj) => {
+    const req = db.transaction(GGUF_STORE).objectStore(GGUF_STORE).get(key);
+    req.onsuccess = e => rs(e.target.result ? e.target.result.buffer : null);
+    req.onerror = e => rj(e.target.error);
+  });
+}
+
+function buildPrompt(messages) {
+  let out = '';
+  for (const m of messages) {
+    out += '<|im_start|>' + m.role + '\\n' + m.content + '<|im_end|>\\n';
+  }
+  return out + '<|im_start|>assistant\\n';
+}
+
+self.onmessage = async (e) => {
+  const msg = e.data;
+  try {
+    if (msg.type === 'load') {
+      if (wllama && loadedKey === msg.modelKey) {
+        self.postMessage({ type: 'loaded', id: msg.id, modelKey: msg.modelKey });
+        return;
+      }
+      self.postMessage({ type: 'progress', id: msg.id, pct: 0, stage: 'reading from cache…' });
+      const buf = await ggufGet(msg.modelKey);
+      if (!buf) {
+        self.postMessage({ type: 'error', id: msg.id, message: 'GGUF not cached — pick a .gguf file in Settings.' });
+        return;
+      }
+      self.postMessage({ type: 'progress', id: msg.id, pct: 5, stage: 'loading wllama…' });
+      const mod = await import(WLLAMA_CDN);
+      const WllamaClass = mod.Wllama || mod.default;
+      if (wllama) { try { await wllama.exit(); } catch {} wllama = null; }
+      wllama = new WllamaClass({
+        'single-thread/wllama.wasm': WLLAMA_WASM + 'single-thread/wllama.wasm',
+        'multi-thread/wllama.wasm': WLLAMA_WASM + 'multi-thread/wllama.wasm',
+      });
+      const blobUrl = URL.createObjectURL(new Blob([buf], { type: 'application/octet-stream' }));
+      self.postMessage({ type: 'progress', id: msg.id, pct: 10, stage: 'initializing model…' });
+      await wllama.loadModelFromUrl(blobUrl, {
+        n_ctx: 2048,
+        progressCallback: ({ loaded, total }) => {
+          if (total > 0)
+            self.postMessage({ type: 'progress', id: msg.id, pct: 10 + Math.round((loaded / total) * 85), stage: 'loading model…' });
+        },
+      });
+      URL.revokeObjectURL(blobUrl);
+      loadedKey = msg.modelKey;
+      self.postMessage({ type: 'loaded', id: msg.id, modelKey: msg.modelKey });
+    }
+    if (msg.type === 'generate') {
+      if (!wllama) throw new Error('No model loaded.');
+      const opts = msg.options || {};
+      const prompt = buildPrompt(msg.prompt);
+      let text = '', aborted = false;
+      self.postMessage({ type: 'generating', id: msg.id });
+      await wllama.createCompletion(prompt, {
+        nPredict: opts.maxTokens || 512,
+        sampling: { temp: opts.temperature || 0.5, top_p: 0.9, top_k: 40 },
+        onNewToken: (_, __, currentText, { abortSignal }) => {
+          if (aborted) { abortSignal(); return; }
+          const delta = currentText.slice(text.length);
+          if (delta) { text = currentText; self.postMessage({ type: 'token', id: msg.id, token: delta }); }
+        },
+      });
+      self.postMessage({ type: 'result', id: msg.id, text });
+    }
+    if (msg.type === 'abort') { /* handled inside onNewToken */ }
+  } catch (err) {
+    self.postMessage({ type: 'error', id: msg.id, message: err.message || String(err) });
+  }
+};
+`;
+
+// ─── WLLAMA STATE + IDB ───────────────────────────────────────────────────────
+const GGUF_DB_NAME = 'codelves_gguf_v1';
+const GGUF_DB_STORE = 'models';
+let _wllamaWorker = null, _wllamaNextId = 1, _wllamaLoaded = false, _wllamaLoadedKey = null;
+const _wllamaPending = new Map();
+
+function _ggufOpenDB() {
+  return new Promise((rs, rj) => {
+    const r = indexedDB.open(GGUF_DB_NAME, 1);
+    r.onupgradeneeded = e => e.target.result.createObjectStore(GGUF_DB_STORE, { keyPath: 'key' });
+    r.onsuccess = e => rs(e.target.result);
+    r.onerror = e => rj(e.target.error);
+  });
+}
+async function _ggufPut(key, buffer) {
+  const db = await _ggufOpenDB();
+  return new Promise((rs, rj) => {
+    const req = db.transaction(GGUF_DB_STORE, 'readwrite').objectStore(GGUF_DB_STORE).put({ key, buffer });
+    req.onsuccess = () => rs();
+    req.onerror = e => rj(e.target.error);
+  });
+}
+
+async function pickGGUF() {
+  let file = null;
+  if (window.showOpenFilePicker) {
+    try {
+      const [fh] = await window.showOpenFilePicker({
+        types: [{ description: 'GGUF model', accept: { 'application/octet-stream': ['.gguf'] } }],
+      });
+      file = await fh.getFile();
+    } catch {}
+  }
+  if (!file) {
+    file = await new Promise(rs => {
+      const inp = Object.assign(document.createElement('input'), { type: 'file', accept: '.gguf' });
+      inp.onchange = () => rs(inp.files[0] || null);
+      inp.click();
+    });
+  }
+  if (!file) return;
+
+  document.getElementById('llmProgress').hidden = false;
+  document.getElementById('llmProgressLabel').textContent = 'Reading ' + file.name + '…';
+  document.getElementById('llmProgressBar').style.width = '20%';
+  setStatus('Reading GGUF…', 'loading');
+
+  const buf = await file.arrayBuffer();
+
+  document.getElementById('llmProgressLabel').textContent = 'Caching in IndexedDB…';
+  document.getElementById('llmProgressBar').style.width = '60%';
+  await _ggufPut(file.name, buf);
+
+  cfg.wllamaModelKey  = file.name;
+  cfg.wllamaModelName = file.name;
+  cfg.llmProvider     = 'wllama';
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg));
+  if (_wllamaWorker) { _wllamaWorker.terminate(); _wllamaWorker = null; }
+  _wllamaLoaded = false; _wllamaLoadedKey = null;
+
+  document.getElementById('llmProgress').hidden = true;
+  updateLLMBadge();
+  updateWllamaRow();
+  setStatus('GGUF cached — ready to chat', 'ready');
+
+  // Close settings if open
+  closeSettings();
+  // Open LLM panel if not already open
+  if (document.getElementById('llmPanel').classList.contains('collapsed')) toggleLLM();
+}
+
+function _getWllamaWorker() {
+  if (_wllamaWorker) return _wllamaWorker;
+  const blob = new Blob([WLLAMA_WORKER_SRC], { type: 'text/javascript' });
+  _wllamaWorker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+  _wllamaWorker.onmessage = (e) => {
+    const msg = e.data;
+    const p = _wllamaPending.get(msg.id);
+    if (msg.type === 'progress') {
+      document.getElementById('llmProgress').hidden = false;
+      document.getElementById('llmProgressBar').style.width = (msg.pct || 0) + '%';
+      document.getElementById('llmProgressLabel').textContent = msg.stage || 'Loading…';
+    } else if (msg.type === 'loaded') {
+      _wllamaLoaded = true; _wllamaLoadedKey = msg.modelKey;
+      document.getElementById('llmProgress').hidden = true;
+      updateLLMBadge(); updateWllamaRow();
+      setStatus('wllama ready · ' + (cfg.wllamaModelName || msg.modelKey), 'ready');
+      if (p) { _wllamaPending.delete(msg.id); p.resolve(); }
+    } else if (msg.type === 'generating') {
+      setStatus('Generating…', 'loading');
+    } else if (msg.type === 'token') {
+      if (p && p.onToken) p.onToken(msg.token);
+    } else if (msg.type === 'result') {
+      setStatus('wllama ready', 'ready');
+      if (p) { _wllamaPending.delete(msg.id); p.resolve(msg.text); }
+    } else if (msg.type === 'error') {
+      _wllamaLoaded = false;
+      document.getElementById('llmProgress').hidden = true;
+      setStatus('wllama error', '');
+      if (p) { _wllamaPending.delete(msg.id); p.reject(new Error(msg.message)); }
+    }
+  };
+  _wllamaWorker.onerror = (e) => {
+    _wllamaLoaded = false;
+    document.getElementById('llmProgress').hidden = true;
+    const m = (e.message || 'wllama worker crashed') +
+      ' — if Tracking Prevention is blocking CDN, switch to transformers.js provider in Settings';
+    console.warn('[Codelves wllama]', m);
+    for (const p of _wllamaPending.values()) p.reject(new Error(m));
+    _wllamaPending.clear(); _wllamaWorker = null;
+  };
+  return _wllamaWorker;
+}
+
+function _wllamaEnsure() {
+  if (!cfg.wllamaModelKey) return Promise.reject(new Error('No GGUF loaded. Click "⇧ Pick GGUF" below.'));
+  if (_wllamaLoaded && _wllamaLoadedKey === cfg.wllamaModelKey) return Promise.resolve();
+  if (_wllamaWorker && _wllamaLoadedKey !== cfg.wllamaModelKey) {
+    _wllamaWorker.terminate(); _wllamaWorker = null;
+    _wllamaLoaded = false; _wllamaLoadedKey = null;
+  }
+  return new Promise((resolve, reject) => {
+    const w = _getWllamaWorker();
+    const id = _wllamaNextId++;
+    _wllamaPending.set(id, { resolve, reject });
+    document.getElementById('llmProgress').hidden = false;
+    w.postMessage({ type: 'load', id, modelKey: cfg.wllamaModelKey });
+  });
+}
+
+async function wllamaCall(messages, onToken) {
+  await _wllamaEnsure();
+  return new Promise((resolve, reject) => {
+    const w = _getWllamaWorker();
+    const id = _wllamaNextId++;
+    _wllamaPending.set(id, { resolve, reject, onToken });
+    w.postMessage({
+      type: 'generate', id,
+      prompt: messages.map(m => ({ role: m.role, content: m.content })),
+      options: { maxTokens: 512, temperature: 0.5 },
+    });
+  });
+}
+
+function updateWllamaRow() {
+  const row  = document.getElementById('wllamaRow');
+  const lbl  = document.getElementById('wllamaModelLabel');
+  if (!row) return;
+  const show = cfg.llmProvider === 'wllama';
+  row.hidden = !show;
+  if (lbl) lbl.textContent = cfg.wllamaModelName || 'No model — pick a GGUF file';
+}
+
+// ─── LOCAL MODEL WORKER ───────────────────────────────────────────────────────
+const LOCAL_WORKER_SRC = `
+const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.1.0/+esm';
+let tm = null, pipe = null, curModel = null, curBackend = null;
+let cachePatched = false;
+
+// Blob workers (null origin) — Chrome Cache API .put() always fails with
+// "Unexpected internal error". Skip the probe (it triggers Chrome console
+// warnings even when caught). Always install IDB-backed cache in workers.
+async function patchCaches() {
+  if (cachePatched) return;
+  cachePatched = true;
+
+  // Replace with IDB store.
+  const DB = 'codelves_tfcache_v1';
+  function openDb() {
+    return new Promise((rs, rj) => {
+      const r = indexedDB.open(DB, 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore('f', { keyPath: 'u' });
+      r.onsuccess = e => rs(e.target.result);
+      r.onerror = e => rj(e.target.error);
+    });
+  }
+  const idbGet = async u => {
+    try {
+      const db = await openDb();
+      return await new Promise((rs, rj) => {
+        const req = db.transaction('f').objectStore('f').get(u);
+        req.onsuccess = e => rs(e.target.result);
+        req.onerror = e => rj(e.target.error);
+      });
+    } catch { return null; }
+  };
+  const idbPut = async (u, buf, hdrs) => {
+    try {
+      const db = await openDb();
+      await new Promise((rs, rj) => {
+        const req = db.transaction('f', 'readwrite').objectStore('f').put({ u, buf, hdrs });
+        req.onsuccess = () => rs();
+        req.onerror = e => rj(e.target.error);
+      });
+    } catch {}
+  };
+  const fakeCache = {
+    async match(req) {
+      const u = typeof req === 'string' ? req : req.url;
+      const e = await idbGet(u);
+      if (!e) return undefined;
+      return new Response(e.buf, { headers: e.hdrs || {} });
+    },
+    async put(req, res) {
+      const u = typeof req === 'string' ? req : req.url;
+      const buf = await res.clone().arrayBuffer();
+      const hdrs = {};
+      try { res.headers.forEach((v, k) => { hdrs[k] = v; }); } catch {}
+      await idbPut(u, buf, hdrs);
+    },
+    async delete() { return true; },
+    async keys() { return []; },
+    async add() {}, async addAll() {},
+  };
+  const fakeCaches = {
+    open: async () => fakeCache,
+    match: u => fakeCache.match(u),
+    has: async () => true, delete: async () => true, keys: async () => [],
+  };
+  try { Object.defineProperty(self, 'caches', { value: fakeCaches, writable: true, configurable: true }); }
+  catch { try { self.caches = fakeCaches; } catch {} }
+}
+
+async function getTF() {
+  if (tm) return tm;
+  tm = await import(CDN);
+  if (tm.env?.backends?.onnx?.wasm) {
+    tm.env.backends.onnx.wasm.numThreads = 1;
+    tm.env.backends.onnx.wasm.simd = true;
+  }
+  if (tm.env) tm.env.useBrowserCache = true;
+  return tm;
+}
+
+async function checkGPU() {
+  try { return !!(await navigator?.gpu?.requestAdapter()); } catch { return false; }
+}
+
+self.onmessage = async (e) => {
+  const msg = e.data;
+  try {
+    if (msg.type === 'load') {
+      if (pipe && curModel === msg.modelId && curBackend) {
+        self.postMessage({ type: 'loaded', id: msg.id, modelId: msg.modelId, backend: curBackend });
+        return;
+      }
+      pipe = null; curModel = msg.modelId; curBackend = null;
+      self.postMessage({ type: 'progress', id: msg.id, progress: 0, stage: 'patching cache…' });
+      await patchCaches();
+      self.postMessage({ type: 'progress', id: msg.id, progress: 0, stage: 'loading runtime' });
+      const { pipeline } = await getTF();
+      const gpu = await checkGPU();
+      const candidates = [
+        ...(gpu ? ['q4f16','q4','fp32'].map(d => ({ device: 'webgpu', dtype: d })) : []),
+        ...['q4','q8','fp32'].map(d => ({ device: 'wasm', dtype: d })),
+      ];
+      let lastErr = null;
+      for (const { device, dtype } of candidates) {
+        try {
+          self.postMessage({ type: 'progress', id: msg.id, progress: 0, stage: 'loading ' + device + '/' + dtype });
+          pipe = await pipeline('text-generation', msg.modelId, {
+            device, dtype,
+            progress_callback: (ev) => {
+              if (ev?.status === 'progress' && typeof ev.progress === 'number')
+                self.postMessage({ type: 'progress', id: msg.id, progress: Math.round(ev.progress), stage: ev.file ?? '' });
+            },
+          });
+          curBackend = device;
+          self.postMessage({ type: 'loaded', id: msg.id, modelId: msg.modelId, backend: device });
+          return;
+        } catch (err) { lastErr = err; pipe = null; }
+      }
+      throw lastErr || new Error('All backends failed.');
+    }
+    if (msg.type === 'generate') {
+      if (!pipe) throw new Error('No model loaded.');
+      const opts = msg.options || {};
+      // return_full_text:true → always get full messages array → reliable extraction
+      const out = await pipe(msg.prompt, {
+        max_new_tokens: opts.maxTokens || 512,
+        temperature: opts.temperature || 0.7,
+        top_p: 0.95, do_sample: true, return_full_text: true,
+      });
+      const first = Array.isArray(out) ? out[0] : out;
+      const gen = first?.generated_text;
+      let text = '';
+      if (Array.isArray(gen)) {
+        // Full messages array — find last assistant turn (it's the generated response)
+        for (let i = gen.length - 1; i >= 0; i--) {
+          if (gen[i]?.role === 'assistant') { text = String(gen[i].content ?? ''); break; }
+        }
+        // Fallback: last item content
+        if (!text) text = String(gen[gen.length - 1]?.content ?? '');
+      } else {
+        // String output — transformers.js returned raw decoded text.
+        // Strip the chat template and take only the final assistant turn.
+        text = String(gen ?? '');
+        // ChatML / SmolLM2 / Qwen format
+        const chatML = text.lastIndexOf('<|im_start|>assistant');
+        if (chatML >= 0) {
+          text = text.slice(chatML + '<|im_start|>assistant'.length).trimStart();
+          const end = text.indexOf('<|im_end|>');
+          if (end >= 0) text = text.slice(0, end);
+        }
+        // Llama-2 / Mistral format
+        else if (text.includes('[/INST]')) {
+          const parts = text.split('[/INST]');
+          text = parts[parts.length - 1].replace(/<\/s>[\s\S]*$/, '');
+        }
+        // Llama-3 format
+        else if (text.includes('<|start_header_id|>assistant<|end_header_id|>')) {
+          const idx = text.lastIndexOf('<|start_header_id|>assistant<|end_header_id|>');
+          text = text.slice(idx + '<|start_header_id|>assistant<|end_header_id|>'.length).trimStart();
+          const end = text.indexOf('<|eot_id|>');
+          if (end >= 0) text = text.slice(0, end);
+        }
+        text = text.trim();
+      }
+      self.postMessage({ type: 'result', id: msg.id, text });
+    }
+  } catch (err) {
+    self.postMessage({ type: 'error', id: msg.id, message: err.message || String(err) });
+  }
+};
+`;
+
+let _localWorker = null;
+let _localNextId = 1;
+const _localPending = new Map();
+let _localLoaded = false;
+let _localLoadedModelId = null;
+
+// Main-thread fallback — used when blob-worker CDN import is blocked (Edge TP)
+let _useMainThread = false;
+let _mainTF = null;
+let _mainPipe = null;
+let _mainPipeModelId = null;
+let _mainLoadPromise = null;
+
+function _getLocalWorker() {
+  if (_localWorker) return _localWorker;
+  const blob = new Blob([LOCAL_WORKER_SRC], { type: 'text/javascript' });
+  _localWorker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+  _localWorker.onmessage = (e) => {
+    const msg = e.data;
+    const p = _localPending.get(msg.id);
+    if (msg.type === 'progress') {
+      document.getElementById('llmProgress').hidden = false;
+      document.getElementById('llmProgressBar').style.width = msg.progress + '%';
+      document.getElementById('llmProgressLabel').textContent = msg.stage || 'Loading…';
+    } else if (msg.type === 'loaded') {
+      _localLoaded = true;
+      _localLoadedModelId = msg.modelId;
+      document.getElementById('llmProgress').hidden = true;
+      updateLLMBadge();
+      setStatus('Local model ready · ' + msg.backend, 'ready');
+      if (p) { _localPending.delete(msg.id); p.resolve(); }
+    } else if (msg.type === 'result') {
+      if (p) { _localPending.delete(msg.id); p.resolve(msg.text); }
+    } else if (msg.type === 'error') {
+      _localLoaded = false;
+      document.getElementById('llmProgress').hidden = true;
+      // If CDN/import/fetch blocked, flag main-thread fallback for next call
+      const m = msg.message || '';
+      if (/import|fetch|blocked|Failed to fetch|network/i.test(m)) _useMainThread = true;
+      if (p) { _localPending.delete(msg.id); p.reject(new Error(m)); }
+    }
+  };
+  _localWorker.onerror = (e) => {
+    _localLoaded = false;
+    _useMainThread = true;
+    document.getElementById('llmProgress').hidden = true;
+    const msg = e.message || 'Worker crashed — switching to main-thread mode';
+    console.warn('[Codelves local]', msg, '— will retry in main thread');
+    for (const p of _localPending.values()) p.reject(new Error(msg));
+    _localPending.clear();
+    _localWorker?.terminate();
+    _localWorker = null;
+  };
+  return _localWorker;
+}
+
+function _localEnsureModel() {
+  if (_localLoaded && _localLoadedModelId === cfg.localModel) return Promise.resolve();
+  if (_localWorker && _localLoadedModelId !== cfg.localModel) {
+    _localWorker.terminate();
+    _localWorker = null;
+    _localLoaded = false;
+    _localLoadedModelId = null;
+  }
+  return new Promise((resolve, reject) => {
+    const w = _getLocalWorker();
+    const id = _localNextId++;
+    _localPending.set(id, { resolve, reject });
+    setStatus('Downloading model…', 'loading');
+    document.getElementById('llmProgress').hidden = false;
+    w.postMessage({ type: 'load', id, modelId: cfg.localModel });
+  });
+}
+
+let _mainCachePatched = false;
+function _patchMainThreadCaches() {
+  if (_mainCachePatched) return;
+  _mainCachePatched = true;
+  const DB = 'codelves_tfcache_v1';
+  function openDb() {
+    return new Promise((rs, rj) => {
+      const r = indexedDB.open(DB, 1);
+      r.onupgradeneeded = e => e.target.result.createObjectStore('f', { keyPath: 'u' });
+      r.onsuccess = e => rs(e.target.result);
+      r.onerror = e => rj(e.target.error);
+    });
+  }
+  const idbGet = async u => {
+    try {
+      const db = await openDb();
+      return await new Promise((rs, rj) => {
+        const req = db.transaction('f').objectStore('f').get(u);
+        req.onsuccess = e => rs(e.target.result);
+        req.onerror = e => rj(e.target.error);
+      });
+    } catch { return null; }
+  };
+  const idbPut = async (u, buf, hdrs) => {
+    try {
+      const db = await openDb();
+      await new Promise((rs, rj) => {
+        const req = db.transaction('f', 'readwrite').objectStore('f').put({ u, buf, hdrs });
+        req.onsuccess = () => rs();
+        req.onerror = e => rj(e.target.error);
+      });
+    } catch {}
+  };
+  const fakeCache = {
+    async match(req) {
+      const u = typeof req === 'string' ? req : req.url;
+      const e = await idbGet(u);
+      if (!e) return undefined;
+      return new Response(e.buf, { headers: e.hdrs || {} });
+    },
+    async put(req, res) {
+      const u = typeof req === 'string' ? req : req.url;
+      const buf = await res.clone().arrayBuffer();
+      const hdrs = {};
+      try { res.headers.forEach((v, k) => { hdrs[k] = v; }); } catch {}
+      await idbPut(u, buf, hdrs);
+    },
+    async delete() { return true; }, async keys() { return []; },
+    async add() {}, async addAll() {},
+  };
+  const fakeCaches = {
+    open: async () => fakeCache, match: u => fakeCache.match(u),
+    has: async () => true, delete: async () => true, keys: async () => [],
+  };
+  try { Object.defineProperty(window, 'caches', { value: fakeCaches, writable: true, configurable: true }); }
+  catch { try { window.caches = fakeCaches; } catch {} }
+}
+
+async function _ensureMainThreadPipe() {
+  if (_mainPipe && _mainPipeModelId === cfg.localModel) return;
+  if (_mainLoadPromise) { await _mainLoadPromise; return; }
+  // Model changed — reset
+  if (_mainPipe && _mainPipeModelId !== cfg.localModel) { _mainPipe = null; _mainPipeModelId = null; }
+  _mainLoadPromise = (async () => {
+    const CDN = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.1.0/+esm';
+    // Patch window.caches BEFORE import so transformers.js uses our IDB fake
+    // (Edge Tracking Prevention blocks CDN scripts from using the real Cache API)
+    _patchMainThreadCaches();
+    document.getElementById('llmProgress').hidden = false;
+    document.getElementById('llmProgressLabel').textContent = 'Loading runtime…';
+    document.getElementById('llmProgressBar').style.width = '2%';
+    setStatus('Loading transformers.js…', 'loading');
+    _mainTF = await import(CDN);
+    const { pipeline, env } = _mainTF;
+    if (env?.backends?.onnx?.wasm) {
+      env.backends.onnx.wasm.numThreads = Math.min(navigator.hardwareConcurrency || 2, 4);
+      env.backends.onnx.wasm.simd = true;
+    }
+    if (env) env.useBrowserCache = true;
+    document.getElementById('llmProgressLabel').textContent = 'Downloading model…';
+    document.getElementById('llmProgressBar').style.width = '5%';
+    // Try q4 → q8 → fp32 in wasm
+    const dtypes = ['q4', 'q8', 'fp32'];
+    let lastErr = null;
+    for (const dtype of dtypes) {
+      try {
+        document.getElementById('llmProgressLabel').textContent = 'Loading wasm/' + dtype + '…';
+        _mainPipe = await pipeline('text-generation', cfg.localModel, {
+          device: 'wasm', dtype,
+          progress_callback: (ev) => {
+            if (ev?.status === 'progress' && typeof ev.progress === 'number') {
+              const pct = Math.round(ev.progress);
+              document.getElementById('llmProgressBar').style.width = pct + '%';
+              document.getElementById('llmProgressLabel').textContent = (ev.file || '') + ' ' + pct + '%';
+            }
+          },
+        });
+        _mainPipeModelId = cfg.localModel;
+        document.getElementById('llmProgress').hidden = true;
+        setStatus('Local model ready · wasm/' + dtype, 'ready');
+        updateLLMBadge();
+        return;
+      } catch (err) { lastErr = err; _mainPipe = null; }
+    }
+    document.getElementById('llmProgress').hidden = true;
+    throw lastErr || new Error('All dtypes failed in main thread.');
+  })();
+  try { await _mainLoadPromise; } finally { _mainLoadPromise = null; }
+}
+
+function _extractGenText(out) {
+  const first = Array.isArray(out) ? out[0] : out;
+  const gen = first?.generated_text;
+  let text = '';
+  if (Array.isArray(gen)) {
+    for (let i = gen.length - 1; i >= 0; i--) {
+      if (gen[i]?.role === 'assistant') { text = String(gen[i].content ?? ''); break; }
+    }
+    if (!text) text = String(gen[gen.length - 1]?.content ?? '');
+  } else {
+    text = String(gen ?? '');
+    const chatML = text.lastIndexOf('<|im_start|>assistant');
+    if (chatML >= 0) {
+      text = text.slice(chatML + '<|im_start|>assistant'.length).trimStart();
+      const end = text.indexOf('<|im_end|>');
+      if (end >= 0) text = text.slice(0, end);
+    } else if (text.includes('[/INST]')) {
+      const parts = text.split('[/INST]');
+      text = parts[parts.length - 1].replace(/<\/s>[\s\S]*$/, '');
+    } else if (text.includes('<|start_header_id|>assistant<|end_header_id|>')) {
+      const idx = text.lastIndexOf('<|start_header_id|>assistant<|end_header_id|>');
+      text = text.slice(idx + '<|start_header_id|>assistant<|end_header_id|>'.length).trimStart();
+      const end = text.indexOf('<|eot_id|>');
+      if (end >= 0) text = text.slice(0, end);
+    }
+    text = text.trim();
+  }
+  return text;
+}
+
+async function _mainThreadGenerate(messages) {
+  await _ensureMainThreadPipe();
+  setStatus('Generating…', 'loading');
+  const out = await _mainPipe(
+    messages.map(m => ({ role: m.role, content: m.content })),
+    { max_new_tokens: 512, temperature: 0.7, top_p: 0.95, do_sample: true, return_full_text: true }
+  );
+  setStatus('Local model ready', 'ready');
+  return _extractGenText(out);
+}
+
+async function localCall(messages) {
+  if (_useMainThread) return _mainThreadGenerate(messages);
+  try {
+    await _localEnsureModel();
+    setStatus('Generating…', 'loading');
+    return await new Promise((resolve, reject) => {
+      const w = _getLocalWorker();
+      const id = _localNextId++;
+      _localPending.set(id, {
+        resolve: (text) => { setStatus('Local model ready', 'ready'); resolve(text); },
+        reject: (err)  => { setStatus('Local error: ' + err.message, ''); reject(err); },
+      });
+      w.postMessage({
+        type: 'generate', id,
+        prompt: messages.map(m => ({ role: m.role, content: m.content })),
+        options: { maxTokens: 512, temperature: 0.7 },
+      });
+    });
+  } catch (err) {
+    // Worker failed (onerror already set _useMainThread) — retry in main thread
+    console.warn('[Codelves local] switching to main-thread mode:', err.message);
+    _useMainThread = true;
+    if (_localWorker) { _localWorker.terminate(); _localWorker = null; }
+    _localLoaded = false;
+    return _mainThreadGenerate(messages);
+  }
+}
+
+// ─── OPFS ─────────────────────────────────────────────────────────────────────
+async function initFS() {
+  try {
+    fsRoot = await navigator.storage.getDirectory();
+    const entries = [];
+    for await (const [n] of fsRoot) entries.push(n);
+    if (!entries.length) {
+      const fh = await fsRoot.getFileHandle('main.py', { create: true });
+      const w = await fh.createWritable();
+      await w.write(DEFAULT_PY);
+      await w.close();
+    }
+    await renderTree();
+    // Auto-open first .py file
+    for await (const [name, handle] of fsRoot) {
+      if (handle.kind === 'file' && name.endsWith('.py')) {
+        await openFile(handle, name, fsRoot);
+        break;
+      }
+    }
+  } catch (e) {
+    setStatus('OPFS unavailable: ' + e.message, 'error');
+  }
+}
+
+async function listDir(dirHandle) {
+  const entries = [];
+  for await (const [name, handle] of dirHandle) {
+    entries.push({ name, handle, kind: handle.kind });
+  }
+  return entries.sort((a, b) => {
+    if (a.kind !== b.kind) return a.kind === 'directory' ? -1 : 1;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+async function readHandle(fh) {
+  const f = await fh.getFile();
+  return f.text();
+}
+
+async function writeHandle(fh, content) {
+  const w = await fh.createWritable();
+  await w.write(content);
+  await w.close();
+}
+
+// ─── FILE TREE ────────────────────────────────────────────────────────────────
+async function renderTree(parentEl, dirHandle, depth) {
+  if (!parentEl) {
+    parentEl = document.getElementById('treeBody');
+    dirHandle = fsRoot;
+    depth = 0;
+    parentEl.innerHTML = '';
+  }
+  if (!dirHandle) return;
+
+  const entries = await listDir(dirHandle);
+  for (const { name, handle, kind } of entries) {
+    const path = depth === 0 ? name : (dirHandle._codelves_path || '') + '/' + name;
+    handle._codelves_path = path;
+    handle._codelves_parent = dirHandle;
+
+    const row = document.createElement('div');
+    row.className = 'tree-entry' + (kind === 'directory' ? ' folder' : '');
+    row.style.paddingLeft = (12 + depth * 14) + 'px';
+
+    const iconMap = {
+      '.py': '🐍', '.js': '📜', '.ts': '📜', '.json': '{}',
+      '.md': '📝', '.txt': '📄', '.html': '🌐', '.css': '🎨',
+    };
+    const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')) : '';
+    const icon = kind === 'directory' ? '📁' : (iconMap[ext] || '📄');
+
+    const del = document.createElement('button');
+    del.className = 'tree-del'; del.textContent = '✕';
+    del.title = 'Delete';
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if (!confirm(`Delete "${name}"?`)) return;
+      if (kind === 'directory') await dirHandle.removeEntry(name, { recursive: true });
+      else await dirHandle.removeEntry(name);
+      // close tab if open
+      const ti = openTabs.findIndex(t => t.path === path);
+      if (ti >= 0) { openTabs.splice(ti, 1); if (activeIdx >= openTabs.length) activeIdx = openTabs.length - 1; }
+      await renderTree();
+      renderTabs();
+      if (openTabs.length > 0) loadTabContent(openTabs[Math.max(0, activeIdx)]);
+      else clearEditor();
+    };
+
+    row.innerHTML = `<span class="tree-icon">${icon}</span><span class="tree-name">${escHtml(name)}</span>`;
+    row.appendChild(del);
+
+    if (kind === 'directory') {
+      let expanded = false;
+      const subEl = document.createElement('div');
+      subEl.className = 'tree-sub';
+      subEl.hidden = true;
+      row.onclick = async () => {
+        expanded = !expanded;
+        subEl.hidden = !expanded;
+        row.querySelector('.tree-icon').textContent = expanded ? '📂' : '📁';
+        if (expanded && !subEl.children.length) await renderTree(subEl, handle, depth + 1);
+      };
+      parentEl.appendChild(row);
+      parentEl.appendChild(subEl);
+    } else {
+      row.onclick = () => openFile(handle, path, dirHandle);
+      parentEl.appendChild(row);
+    }
+  }
+  updateActiveTreeEntry();
+}
+
+function updateActiveTreeEntry() {
+  const activePath = openTabs[activeIdx]?.path;
+  document.querySelectorAll('.tree-entry').forEach(el => {
+    el.classList.remove('active');
+  });
+  if (activePath) {
+    document.querySelectorAll('.tree-entry').forEach(el => {
+      if (el.querySelector('.tree-name')?.textContent === activePath.split('/').pop()) {
+        // best-effort match by name for now
+      }
+    });
+  }
+}
+
+// ─── EDITOR ──────────────────────────────────────────────────────────────────
+const editorEl = document.getElementById('editor');
+const lineNumsEl = document.getElementById('lineNums');
+const emptyHint = document.getElementById('emptyHint');
+
+async function openFile(fileHandle, path, dirHandle) {
+  const existing = openTabs.findIndex(t => t.path === path);
+  if (existing >= 0) { setActiveTab(existing); return; }
+  const content = await readHandle(fileHandle);
+  openTabs.push({ name: path.split('/').pop(), path, dirHandle, fileHandle, content, dirty: false });
+  setActiveTab(openTabs.length - 1);
+}
+
+function setActiveTab(idx) {
+  if (activeIdx >= 0 && openTabs[activeIdx]) {
+    openTabs[activeIdx].content = editorEl.value;
+  }
+  activeIdx = idx;
+  loadTabContent(openTabs[idx]);
+  renderTabs();
+  updateActiveTreeEntry();
+}
+
+function loadTabContent(tab) {
+  if (!tab) return clearEditor();
+  editorEl.value = tab.content;
+  emptyHint.hidden = true;
+  editorEl.disabled = false;
+  document.getElementById('curFile').textContent = tab.path;
+  document.getElementById('dirtyDot').hidden = !tab.dirty;
+  updateLineNums();
+  const isPy = tab.name.endsWith('.py');
+  document.getElementById('runBtn').disabled = !isPy || !pyodide;
+}
+
+function clearEditor() {
+  activeIdx = -1;
+  editorEl.value = '';
+  editorEl.disabled = true;
+  emptyHint.hidden = false;
+  document.getElementById('curFile').textContent = 'no file open';
+  document.getElementById('dirtyDot').hidden = true;
+  document.getElementById('runBtn').disabled = true;
+  lineNumsEl.innerHTML = '';
+}
+
+function renderTabs() {
+  const strip = document.getElementById('tabStrip');
+  strip.innerHTML = '';
+  openTabs.forEach((tab, i) => {
+    const el = document.createElement('div');
+    el.className = 'tab' + (i === activeIdx ? ' active' : '');
+    el.innerHTML = `
+      <span>${escHtml(tab.name)}</span>
+      ${tab.dirty ? '<span class="tab-dirty">●</span>' : ''}
+      <button class="tab-close" data-i="${i}">✕</button>`;
+    el.addEventListener('click', (e) => {
+      if (e.target.closest('.tab-close')) { closeTab(i); return; }
+      setActiveTab(i);
+    });
+    strip.appendChild(el);
+  });
+}
+
+function closeTab(i) {
+  if (openTabs[i]?.dirty && !confirm(`"${openTabs[i].name}" has unsaved changes. Close anyway?`)) return;
+  openTabs.splice(i, 1);
+  if (activeIdx >= openTabs.length) activeIdx = openTabs.length - 1;
+  if (openTabs.length === 0) { clearEditor(); renderTabs(); return; }
+  setActiveTab(Math.max(0, activeIdx));
+}
+
+// Line numbers
+function updateLineNums() {
+  const count = (editorEl.value.match(/\n/g) || []).length + 1;
+  if (parseInt(lineNumsEl.dataset.count) === count) return;
+  lineNumsEl.dataset.count = count;
+  lineNumsEl.innerHTML = Array.from({ length: count }, (_, i) => `<div>${i + 1}</div>`).join('');
+}
+
+editorEl.addEventListener('scroll', () => { lineNumsEl.scrollTop = editorEl.scrollTop; });
+editorEl.addEventListener('input', () => {
+  updateLineNums();
+  if (activeIdx < 0) return;
+  openTabs[activeIdx].content = editorEl.value;
+  openTabs[activeIdx].dirty = true;
+  document.getElementById('dirtyDot').hidden = false;
+  renderTabs();
+  // Debounced auto-save
+  clearTimeout(savePending);
+  savePending = setTimeout(() => saveActive(), 800);
+});
+
+editorEl.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); runCode(); }
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveActive(); }
+  if (e.ctrlKey && e.key === 'j') { e.preventDefault(); toggleLLM(); }
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const s = editorEl.selectionStart, end = editorEl.selectionEnd;
+    editorEl.value = editorEl.value.slice(0, s) + '    ' + editorEl.value.slice(end);
+    editorEl.selectionStart = editorEl.selectionEnd = s + 4;
+    editorEl.dispatchEvent(new Event('input'));
+  }
+});
+
+async function saveActive() {
+  const tab = openTabs[activeIdx];
+  if (!tab) return;
+  try {
+    await writeHandle(tab.fileHandle, editorEl.value);
+    tab.content = editorEl.value;
+    tab.dirty = false;
+    document.getElementById('dirtyDot').hidden = true;
+    renderTabs();
+  } catch (e) { setStatus('Save failed: ' + e.message, 'error'); }
+}
+
+// ─── NEW FILE / FOLDER ────────────────────────────────────────────────────────
+async function newFile() {
+  const name = prompt('File name:', 'untitled.py');
+  if (!name || !name.trim()) return;
+  const n = name.trim();
+  try {
+    const fh = await fsRoot.getFileHandle(n, { create: true });
+    await writeHandle(fh, '');
+    await renderTree();
+    await openFile(fh, n, fsRoot);
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function newFolder() {
+  const name = prompt('Folder name:');
+  if (!name || !name.trim()) return;
+  try {
+    await fsRoot.getDirectoryHandle(name.trim(), { create: true });
+    await renderTree();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+// ─── RESIZE OUTPUT ────────────────────────────────────────────────────────────
+const resizeH = document.getElementById('resizeH');
+const outputArea = document.getElementById('outputArea');
+let resizing = false, startY = 0, startH = 0;
+
+resizeH.addEventListener('mousedown', (e) => {
+  resizing = true; startY = e.clientY; startH = outputArea.offsetHeight;
+  resizeH.classList.add('dragging');
+  document.body.style.userSelect = 'none';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!resizing) return;
+  const delta = startY - e.clientY;
+  outputArea.style.height = Math.max(60, Math.min(500, startH + delta)) + 'px';
+});
+document.addEventListener('mouseup', () => {
+  resizing = false;
+  resizeH.classList.remove('dragging');
+  document.body.style.userSelect = '';
+});
+
+// ─── PYODIDE ─────────────────────────────────────────────────────────────────
+async function initPyodide() {
+  try {
+    setStatus('Loading Pyodide…', 'loading');
+    pyodide = await loadPyodide({
+      stdout: (t) => appendOut(t, 'stdout'),
+      stderr: (t) => appendOut(t, 'stderr'),
+    });
+    setStatus('Installing numpy, matplotlib…', 'loading');
+    await pyodide.loadPackage(['numpy', 'matplotlib']);
+    await pyodide.runPythonAsync(`
+import matplotlib
+matplotlib.use('module://matplotlib_pyodide.html5_canvas_backend')
+import io, base64
+import matplotlib.pyplot as plt
+
+def _show():
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight',
+                facecolor='#0d0e0f', edgecolor='none', dpi=120)
+    buf.seek(0)
+    import js
+    js._postFig(base64.b64encode(buf.read()).decode())
+    buf.close(); plt.close('all')
+
+plt.show = _show
+`);
+    setStatus('Pyodide ready · numpy · matplotlib', 'ready');
+    const tab = openTabs[activeIdx];
+    if (tab?.name.endsWith('.py')) document.getElementById('runBtn').disabled = false;
+  } catch (e) {
+    setStatus('Pyodide failed: ' + e.message, 'error');
+  }
+}
+
+window._postFig = (b64) => {
+  const wrap = document.createElement('div');
+  wrap.className = 'out-line img';
+  wrap.innerHTML = `<img src="data:image/png;base64,${b64}" alt="figure">`;
+  document.getElementById('output').appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+};
+
+async function runCode() {
+  if (!pyodide || document.getElementById('runBtn').disabled) return;
+  const code = editorEl.value;
+  const btn = document.getElementById('runBtn');
+  btn.classList.add('running'); btn.disabled = true; btn.textContent = '⏹ Stop';
+  appendOut('─── run ───', 'info');
+  try { await pyodide.runPythonAsync(code); }
+  catch (e) { appendOut(String(e), 'stderr'); }
+  btn.classList.remove('running'); btn.disabled = false; btn.textContent = '▶ Run';
+}
+
+function appendOut(text, cls) {
+  const out = document.getElementById('output');
+  const div = document.createElement('div');
+  div.className = 'out-line ' + cls;
+  div.textContent = text;
+  out.appendChild(div);
+  out.scrollTop = out.scrollHeight;
+}
+function clearOutput() { document.getElementById('output').innerHTML = ''; }
+
+// ─── LLM ─────────────────────────────────────────────────────────────────────
+function updateLLMBadge() {
+  const badge = document.getElementById('llmModelBadge');
+  if (cfg.llmProvider === 'wllama') {
+    const name = cfg.wllamaModelName || 'no model';
+    badge.textContent = _wllamaLoaded ? `wllama · ${name} ✓` : `wllama · ${name}`;
+  } else if (cfg.llmProvider === 'ollama')    badge.textContent = `ollama · ${cfg.ollamaModel}`;
+  else if (cfg.llmProvider === 'lmstudio') badge.textContent = `lmstudio · ${cfg.lmstudioModel}`;
+  else if (cfg.llmProvider === 'gemini')   badge.textContent = `gemini · ${cfg.geminiModel}`;
+  else {
+    const short = cfg.localModel.includes('/') ? cfg.localModel.split('/').pop() : cfg.localModel;
+    badge.textContent = _localLoaded ? `local · ${short} ✓` : `local · ${short}`;
+  }
+}
+
+function toggleLLM() {
+  const panel = document.getElementById('llmPanel');
+  const btn = document.getElementById('llmToggle');
+  const collapsed = panel.classList.toggle('collapsed');
+  btn.classList.toggle('active', !collapsed);
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('llmThread').innerHTML = '';
+}
+
+document.getElementById('llmForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('llmInput');
+  const q = input.value.trim();
+  if (!q || llmBusy) return;
+  input.value = '';
+  await sendLLM(q);
+});
+
+document.getElementById('llmInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    document.getElementById('llmForm').requestSubmit();
+  }
+});
+
+async function sendLLM(userMsg) {
+  llmBusy = true;
+  document.getElementById('llmSend').disabled = true;
+
+  // Build context
+  let contextPrefix = '';
+  if (document.getElementById('injectCtx').checked && openTabs[activeIdx]) {
+    const tab = openTabs[activeIdx];
+    contextPrefix = `Current file: ${tab.path}\n\`\`\`python\n${editorEl.value}\n\`\`\`\n\n`;
+  }
+
+  const fullMsg = contextPrefix + userMsg;
+  appendChat('user', userMsg);
+
+  const msgs = [
+    { role: 'system', content: 'You are a helpful Python coding assistant inside Codelves, a browser-based IDE. Be concise. Use code blocks for code.' },
+    ...chatHistory,
+    { role: 'user', content: fullMsg },
+  ];
+
+  const typingEl = appendTyping();
+
+  try {
+    let reply = '';
+    const streamCb = (chunk) => {
+      reply = chunk;
+      typingEl.remove();
+      updateLastAssistant(reply) || appendChat('assistant', reply, true);
+    };
+    if (cfg.llmProvider === 'wllama') {
+      let accumulated = '';
+      reply = await wllamaCall(msgs, (token) => {
+        accumulated += token;
+        streamCb(accumulated);
+      });
+      reply = reply || accumulated;
+    } else if (cfg.llmProvider === 'ollama') {
+      reply = await ollamaStream(msgs, streamCb);
+    } else if (cfg.llmProvider === 'lmstudio') {
+      reply = await lmstudioStream(msgs, streamCb);
+    } else if (cfg.llmProvider === 'gemini') {
+      reply = await geminiCall(msgs);
+    } else {
+      reply = await localCall(msgs);
+    }
+    typingEl.remove();
+    // Final render
+    const thread = document.getElementById('llmThread');
+    const last = thread.querySelector('.msg.assistant:last-child');
+    if (last) last.querySelector('.msg-body').innerHTML = renderMd(reply);
+    else appendChat('assistant', reply);
+    chatHistory.push({ role: 'user', content: fullMsg });
+    chatHistory.push({ role: 'assistant', content: reply });
+    // Keep history bounded
+    if (chatHistory.length > 20) chatHistory = chatHistory.slice(-20);
+  } catch (e) {
+    typingEl.remove();
+    appendChat('assistant', '⚠ ' + e.message);
+  }
+
+  llmBusy = false;
+  document.getElementById('llmSend').disabled = false;
+}
+
+async function ollamaStream(messages, onChunk) {
+  const res = await fetch(`${cfg.ollamaUrl}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: cfg.ollamaModel, messages, stream: true }),
+  });
+  if (!res.ok) throw new Error(`Ollama ${res.status}: ${await res.text()}`);
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let full = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = dec.decode(value).split('\n').filter(Boolean);
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (obj.message?.content) { full += obj.message.content; onChunk(full); }
+        if (obj.done) return full;
+      } catch {}
+    }
+  }
+  return full;
+}
+
+// OpenAI-compatible streaming (LM Studio, Jan, etc.)
+async function lmstudioStream(messages, onChunk) {
+  const res = await fetch(`${cfg.lmstudioUrl}/v1/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: cfg.lmstudioModel, messages, stream: true }),
+  });
+  if (!res.ok) throw new Error(`LM Studio ${res.status}: ${await res.text()}`);
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let full = '', buf = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop(); // keep incomplete line
+    for (const line of lines) {
+      const s = line.trim();
+      if (!s.startsWith('data:')) continue;
+      const data = s.slice(5).trim();
+      if (data === '[DONE]') return full;
+      try {
+        const obj = JSON.parse(data);
+        const delta = obj.choices?.[0]?.delta?.content;
+        if (delta) { full += delta; onChunk(full); }
+      } catch {}
+    }
+  }
+  return full;
+}
+
+async function geminiCall(messages) {
+  if (!cfg.geminiKey) throw new Error('No Gemini API key set. Open ⚙ Settings.');
+  const contents = messages
+    .filter(m => m.role !== 'system')
+    .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.geminiModel}:generateContent?key=${cfg.geminiKey}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents }),
+  });
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || '(empty response)';
+}
+
+function appendChat(role, content, raw) {
+  const thread = document.getElementById('llmThread');
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${role}`;
+  wrap.innerHTML = `
+    <div class="msg-role">${role === 'user' ? 'You' : '✦ LLM'}</div>
+    <div class="msg-body">${raw ? escHtml(content) : renderMd(content)}</div>`;
+  thread.appendChild(wrap);
+  thread.scrollTop = thread.scrollHeight;
+  return wrap;
+}
+
+function appendTyping() {
+  const thread = document.getElementById('llmThread');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg assistant';
+  wrap.innerHTML = `<div class="msg-role">✦ LLM</div><div class="msg-body"><div class="llm-typing"><span></span><span></span><span></span></div></div>`;
+  thread.appendChild(wrap);
+  thread.scrollTop = thread.scrollHeight;
+  return wrap;
+}
+
+function updateLastAssistant(content) {
+  const thread = document.getElementById('llmThread');
+  const last = thread.querySelector('.msg.assistant:last-child .msg-body');
+  if (!last || last.querySelector('.llm-typing')) return false;
+  last.textContent = content;
+  thread.scrollTop = thread.scrollHeight;
+  return true;
+}
+
+// Minimal markdown: code fences, inline code, bold
+function renderMd(text) {
+  let out = escHtml(text);
+  // Code fences
+  out = out.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${code}</code></pre>`);
+  // Inline code
+  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // Bold
+  out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Newlines
+  out = out.replace(/\n/g, '<br>');
+  return out;
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function openSettings() {
+  const o = document.getElementById('settingsOverlay');
+  document.getElementById('providerSel').value = cfg.llmProvider;
+  document.getElementById('wllamaSettingsLabel').textContent = cfg.wllamaModelName || 'No model loaded';
+  document.getElementById('lmstudioUrl').value = cfg.lmstudioUrl;
+  document.getElementById('lmstudioModel').value = cfg.lmstudioModel;
+  document.getElementById('ollamaUrl').value = cfg.ollamaUrl;
+  document.getElementById('ollamaModel').value = cfg.ollamaModel;
+  document.getElementById('geminiKey').value = cfg.geminiKey;
+  document.getElementById('geminiModel').value = cfg.geminiModel;
+  document.getElementById('localModel').value = cfg.localModel;
+  onProviderChange();
+  o.hidden = false;
+}
+function closeSettings() { document.getElementById('settingsOverlay').hidden = true; }
+function saveSettings() {
+  const prevLocalModel = cfg.localModel;
+  cfg.llmProvider = document.getElementById('providerSel').value;
+  cfg.lmstudioUrl   = document.getElementById('lmstudioUrl').value.trim() || DEF_SETTINGS.lmstudioUrl;
+  cfg.lmstudioModel = document.getElementById('lmstudioModel').value.trim() || DEF_SETTINGS.lmstudioModel;
+  cfg.ollamaUrl   = document.getElementById('ollamaUrl').value.trim() || DEF_SETTINGS.ollamaUrl;
+  cfg.ollamaModel = document.getElementById('ollamaModel').value.trim() || DEF_SETTINGS.ollamaModel;
+  cfg.geminiKey   = document.getElementById('geminiKey').value.trim();
+  cfg.geminiModel = document.getElementById('geminiModel').value.trim() || DEF_SETTINGS.geminiModel;
+  cfg.localModel  = document.getElementById('localModel').value.trim() || DEF_SETTINGS.localModel;
+  // Reset local worker if model changed
+  if (cfg.localModel !== prevLocalModel) {
+    if (_localWorker) { _localWorker.terminate(); _localWorker = null; }
+    _localLoaded = false; _localLoadedModelId = null;
+    _mainPipe = null; _mainPipeModelId = null; _useMainThread = false;
+  }
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(cfg));
+  updateLLMBadge();
+  updateWllamaRow();
+  closeSettings();
+}
+function onProviderChange() {
+  const p = document.getElementById('providerSel').value;
+  document.getElementById('wllamaFields').hidden   = p !== 'wllama';
+  document.getElementById('lmstudioFields').hidden = p !== 'lmstudio';
+  document.getElementById('ollamaFields').hidden   = p !== 'ollama';
+  document.getElementById('geminiFields').hidden   = p !== 'gemini';
+  document.getElementById('localFields').hidden    = p !== 'local';
+}
+document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeSettings();
+});
+
+// ─── HELP ─────────────────────────────────────────────────────────────────────
+function openHelp() { document.getElementById('helpOverlay').hidden = false; }
+function closeHelp() { document.getElementById('helpOverlay').hidden = true; }
+document.getElementById('helpOverlay').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) closeHelp();
+});
+
+// ─── SIDEBAR TOGGLE ──────────────────────────────────────────────────────────
+function toggleTree() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ─── STATUS ──────────────────────────────────────────────────────────────────
+function setStatus(msg, state) {
+  document.getElementById('statusText').textContent = msg;
+  const dot = document.getElementById('statusDot');
+  dot.className = 'status-dot ' + (state === 'ready' ? 'ready' : state === 'loading' ? 'loading' : '');
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── KEYBOARD GLOBAL ─────────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.key === 'j' && document.activeElement !== editorEl) {
+    e.preventDefault(); toggleLLM();
+  }
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+updateLLMBadge();
+updateWllamaRow();
+clearEditor();
+initFS().then(() => initPyodide());
+</script>
+</body>
+</html>

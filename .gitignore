@@ -1,0 +1,15 @@
+# Models — exceed Cloudflare Pages' 25 MiB/file limit. Host on R2 / HF, not Pages.
+*.gguf
+**/models/*.gguf
+
+# Heavy self-contained .elf artifacts (model baked in) — host externally.
+demos/kalman.elf.html
+
+# Build cruft / local
+build.zip
+*.original.md
+node_modules/
+.env
+.env.*
+.DS_Store
+Thumbs.db

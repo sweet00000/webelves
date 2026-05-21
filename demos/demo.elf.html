@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="elf-version" content="0.2">
+  <meta name="elf-fingerprint" content="sha256:ddee4cae777ce2076ea3a2f2c6c7765bf85465b986b81948e99ff513d5d56cba">
+  <title>Foundry Demo ELF</title>
+  <script type="application/elf-manifest">
+{
+  "elf_version": "0.2",
+  "id": "urn:uuid:foundry-demo-0001",
+  "title": "Foundry Demo ELF",
+  "description": "Smallest possible .elf produced by foundry build for the round-trip demo.",
+  "created": "2026-05-07T00:00:00Z",
+  "resources": [
+    {
+      "id": "res:doc.hello",
+      "media_type": "text/plain",
+      "size": 12,
+      "sha256": "c0535e4be2b79ffd93291305436bf889314e4a3faec05ecffcbb7df31ad9e51a",
+      "role": "document",
+      "behavioral": false,
+      "canonical_content": true,
+      "path": "doc-hello.txt"
+    }
+  ],
+  "interaction": {
+    "kind": "chat",
+    "operations": [
+      "generate-text"
+    ]
+  },
+  "fulfillments": {
+    "generate-text": [
+      {
+        "id": "host",
+        "kind": "host-capability"
+      }
+    ]
+  },
+  "provenance": {
+    "builder": "foundry/0.1",
+    "built_at": "2026-05-07T14:38:57.710Z"
+  },
+  "signatures": []
+}
+  </script>
+  <!--
+    artifact identity: sha256:ddee4cae777ce2076ea3a2f2c6c7765bf85465b986b81948e99ff513d5d56cba
+    canonical bytes: 667 chars (RFC 8785)
+  -->
+  <script type="application/elf-resource" data-id="res:doc.hello" data-encoding="base64" data-sha256="c0535e4be2b79ffd93291305436bf889314e4a3faec05ecffcbb7df31ad9e51a" data-media-type="text/plain">SGVsbG8gd29ybGQh</script>
+</head>
+<body>
+<div id="elf-app"></div>
+<script type="module">
+// .elf bootstrap. Lives inline in every Forge-built single-file artifact.
+// Walks the inert <script type="application/elf-resource"> tags, base64-decodes
+// each one, verifies SHA-256 against the data-sha256 attribute, then hands a
+// Map<resourceId, Blob> to the binding-runtime resource's exported init().
+
+(async () => {
+  const log = (...args) => console.log('[elf]', ...args);
+  const fail = (msg, err) => {
+    document.body.innerHTML =
+      '<pre style="padding:1rem;color:#b91c1c;font-family:ui-monospace,monospace;white-space:pre-wrap">' +
+      `.elf bootstrap failed: ${msg}\n\n${err && err.stack ? err.stack : err || ''}` +
+      '</pre>';
+    throw err || new Error(msg);
+  };
+
+  try {
+    const manifestNode = document.querySelector('script[type="application/elf-manifest"]');
+    if (!manifestNode) throw new Error('missing elf-manifest script');
+    const manifest = JSON.parse(manifestNode.textContent);
+
+    const nodes = Array.from(
+      document.querySelectorAll('script[type="application/elf-resource"]'),
+    );
+    log(`decoding ${nodes.length} resources`);
+
+    const resources = new Map();
+    for (const node of nodes) {
+      const id = node.getAttribute('data-id');
+      const declaredSha = (node.getAttribute('data-sha256') || '').toLowerCase();
+      const mediaType = node.getAttribute('data-media-type') || 'application/octet-stream';
+      const encoding = node.getAttribute('data-encoding') || 'base64';
+      const b64 = (node.textContent || '').replace(/\s+/g, '');
+
+      let bytes;
+      if (encoding === 'base64') {
+        const bin = atob(b64);
+        bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      } else {
+        throw new Error(`unsupported encoding "${encoding}" for ${id}`);
+      }
+
+      // Verify SHA-256 in the browser; refuse to load tampered resources.
+      const digest = await crypto.subtle.digest('SHA-256', bytes);
+      let actualSha = '';
+      const dv = new Uint8Array(digest);
+      for (let i = 0; i < dv.length; i++) {
+        actualSha += dv[i].toString(16).padStart(2, '0');
+      }
+      if (declaredSha && actualSha !== declaredSha) {
+        throw new Error(
+          `sha256 mismatch for ${id}: expected ${declaredSha}, got ${actualSha}`,
+        );
+      }
+
+      resources.set(id, new Blob([bytes], { type: mediaType }));
+    }
+
+    // Find the binding-runtime resource and dynamic-import it as an ES module.
+    const runtimeEntry = manifest.resources.find((r) => r.role === 'binding-runtime');
+    if (!runtimeEntry) throw new Error('no binding-runtime resource declared');
+    const runtimeBlob = resources.get(runtimeEntry.id);
+    if (!runtimeBlob) throw new Error(`binding-runtime resource missing bytes: ${runtimeEntry.id}`);
+
+    const moduleUrl = URL.createObjectURL(
+      new Blob([await runtimeBlob.text()], { type: 'text/javascript' }),
+    );
+    const mod = await import(/* @vite-ignore */ moduleUrl);
+    if (typeof mod.init !== 'function') {
+      throw new Error('binding-runtime did not export init({manifest, resources})');
+    }
+    await mod.init({ manifest, resources, log });
+  } catch (err) {
+    fail(err && err.message ? err.message : String(err), err);
+  }
+})();
+
+</script>
+</body>
+</html>

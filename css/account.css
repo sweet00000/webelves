@@ -1,0 +1,30 @@
+/* Shared account widget + auth modal. Loaded on every page after the page theme.
+   Uses var() fallbacks so it works under both landing.css and site.css/reskin.css. */
+.acct { display: inline-flex; align-items: center; position: relative; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.acct-signin { background: none; border: 1px solid var(--border-2, var(--border, #2a2f33)); color: var(--ink, #eee); padding: 7px 14px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+.acct-signin:hover { border-color: var(--accent, #5fcfb8); color: var(--accent, #5fcfb8); }
+.acct-btn { display: inline-flex; align-items: center; gap: 8px; background: none; border: 1px solid var(--border-2, var(--border, #2a2f33)); color: var(--ink, #eee); padding: 5px 10px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+.acct-avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--accent, #5fcfb8); color: #04140f; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.acct-email { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-tier { font-size: 9px; text-transform: uppercase; letter-spacing: .12em; color: var(--accent, #5fcfb8); border: 1px solid var(--accent, #5fcfb8); border-radius: 3px; padding: 1px 5px; }
+.acct-drop { position: absolute; right: 0; top: 120%; background: var(--surface, var(--bg-card, #15181a)); border: 1px solid var(--border-2, var(--border, #2a2f33)); border-radius: 6px; padding: 8px; min-width: 190px; display: flex; flex-direction: column; gap: 2px; z-index: 250; }
+.acct-row { font-size: 12px; color: var(--ink-soft, #a4aaa8); padding: 6px 8px; }
+.acct-row b { color: var(--ink, #eee); text-transform: capitalize; }
+.acct-link { background: none; border: none; text-align: left; color: var(--ink, #eee); padding: 7px 8px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+.acct-link:hover { background: rgba(255,255,255,.06); }
+.acct-link.up { color: var(--accent, #5fcfb8); }
+[hidden] { display: none !important; }
+
+.acctm-bg { position: fixed; inset: 0; z-index: 400; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; }
+.acctm-bg.open { display: flex; }
+.acctm { background: var(--surface, var(--bg-card, #15181a)); border: 1px solid var(--border-2, var(--border, #2a2f33)); border-radius: 8px; padding: 30px; width: 100%; max-width: 360px; font-family: system-ui, -apple-system, sans-serif; }
+.acctm h3 { font-size: 20px; font-weight: 650; margin-bottom: 6px; color: var(--ink, #eee); }
+.acctm > p { font-size: 13px; color: var(--ink-soft, #a4aaa8); margin-bottom: 18px; }
+.acctm input { width: 100%; background: var(--bg, #08090a); border: 1px solid var(--border-2, var(--border, #2a2f33)); border-radius: 4px; color: var(--ink, #eee); padding: 11px 13px; font-size: 14px; outline: none; margin-bottom: 10px; }
+.acctm input:focus { border-color: var(--accent, #5fcfb8); }
+.acctm .primary { width: 100%; background: var(--accent, #5fcfb8); color: #04140f; border: none; padding: 11px; border-radius: 4px; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 4px; }
+.acctm .ghost { width: 100%; background: none; border: 1px solid var(--border-2, var(--border, #2a2f33)); color: var(--ink, #eee); padding: 10px; border-radius: 4px; font-size: 14px; cursor: pointer; margin-top: 10px; }
+.acctm-x { float: right; background: none; border: none; color: var(--ink-faint, #6b7270); font-size: 20px; cursor: pointer; line-height: 1; }
+.acctm-err { color: #e87a8a; font-size: 12px; min-height: 16px; margin-top: 8px; }
+.acctm-foot { font-size: 12px; color: var(--ink-faint, #6b7270); margin-top: 14px; text-align: center; }
+.acctm-foot a { color: var(--accent, #5fcfb8); cursor: pointer; }

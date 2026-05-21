@@ -1,0 +1,1 @@
+self.onmessage=async a=>{const{id:n,buffer:o}=a.data,i=await crypto.subtle.digest("SHA-256",o),s=new Uint8Array(i);let e="";for(let t=0;t<s.length;t++)e+=s[t].toString(16).padStart(2,"0");const r={id:n,sha256:e};self.postMessage(r)};

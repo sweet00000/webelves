@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docs — webelves</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='28'>⬡</text></svg>">
+<link rel="stylesheet" href="../css/site.css">
+<link rel="stylesheet" href="../css/reskin.css">
+<link rel="stylesheet" href="../css/account.css">
+<style>
+.docs-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  max-width: 1100px;
+  margin: 0 auto;
+  min-height: calc(100vh - 56px);
+  position: relative; z-index: 1;
+}
+@media (max-width: 760px) {
+  .docs-layout { grid-template-columns: 1fr; }
+  .docs-sidebar { display: none; }
+}
+.docs-sidebar {
+  padding: 80px 0 40px;
+  border-right: 1px solid var(--border);
+  position: sticky; top: 56px;
+  height: calc(100vh - 56px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.docs-sidebar nav { padding: 24px 20px; }
+.sidebar-section { margin-bottom: 28px; }
+.sidebar-section-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: .2em;
+  color: var(--ink-faint); margin-bottom: 10px; display: block;
+}
+.sidebar-link {
+  display: block; padding: 5px 8px; border-radius: 4px;
+  font-size: 12px; color: var(--ink-soft); text-decoration: none;
+  transition: background .15s, color .15s;
+  margin-bottom: 2px;
+}
+.sidebar-link:hover { background: var(--bg-card); color: var(--ink); }
+.sidebar-link.active { background: var(--bg-card); color: var(--teal); }
+.sidebar-link.sub { padding-left: 20px; font-size: 11px; color: var(--ink-faint); }
+.sidebar-link.sub:hover { color: var(--ink-soft); }
+
+.docs-body { padding: 80px 48px 80px; }
+@media (max-width: 760px) { .docs-body { padding: 80px 20px 40px; } }
+
+.docs-body h1 {
+  font-family: 'IBM Plex Serif', Georgia, serif;
+  font-size: clamp(24px, 3vw, 36px); font-weight: 600;
+  letter-spacing: -.02em; margin-bottom: 12px; line-height: 1.15;
+}
+.docs-body h2 {
+  font-size: 20px; font-weight: 700; margin: 48px 0 12px;
+  padding-top: 48px; border-top: 1px solid var(--border);
+  scroll-margin-top: 80px;
+}
+.docs-body h2:first-of-type { border-top: none; padding-top: 0; margin-top: 32px; }
+.docs-body h3 { font-size: 14px; font-weight: 700; margin: 28px 0 8px; color: var(--ink); }
+.docs-body p { font-size: 13px; color: var(--ink-soft); line-height: 1.75; margin-bottom: 14px; max-width: 680px; }
+.docs-body ul { padding-left: 20px; margin-bottom: 16px; }
+.docs-body li { font-size: 13px; color: var(--ink-soft); line-height: 1.7; margin-bottom: 4px; }
+.docs-body code {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 3px; font-size: 11px; color: var(--teal);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.docs-body pre {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 6px; padding: 16px 18px; margin: 14px 0 20px;
+  overflow-x: auto; font-size: 12px; line-height: 1.65;
+  color: var(--ink); max-width: 680px;
+}
+.docs-body pre code { background: none; border: none; padding: 0; font-size: 12px; color: inherit; }
+.docs-body .callout {
+  background: var(--bg-card); border-left: 3px solid var(--teal);
+  padding: 14px 18px; border-radius: 0 6px 6px 0;
+  margin: 16px 0; font-size: 13px; color: var(--ink-soft); max-width: 680px;
+}
+.docs-body .callout.warn { border-left-color: var(--warn); }
+.docs-body .callout.rose { border-left-color: var(--rose); }
+.docs-body table { border-collapse: collapse; width: 100%; max-width: 680px; margin: 14px 0 20px; font-size: 12px; }
+.docs-body th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--ink-faint); font-size: 10px; text-transform: uppercase; letter-spacing: .15em; }
+.docs-body td { padding: 8px 12px; border-bottom: 1px solid var(--border-soft); color: var(--ink-soft); }
+.docs-body td code { font-size: 11px; }
+.tag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .15em; padding: 2px 7px; border-radius: 3px; margin-left: 8px; vertical-align: middle; }
+.tag.teal { background: rgba(95,207,184,.12); color: var(--teal); }
+.tag.warn { background: rgba(240,198,116,.12); color: var(--warn); }
+.tag.rose { background: rgba(232,122,138,.12); color: var(--rose); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a class="nav-logo" href="/">
+      <span class="nav-logo-mark">webelves</span>
+      <span class="nav-logo-sub">offline AI</span>
+    </a>
+    <div class="nav-links">
+      <a href="/open/notebook/" target="_blank" rel="noopener">NotebookELF</a>
+      <a href="/open/ide/"      target="_blank" rel="noopener">Codelves</a>
+      <a href="/about.html">About</a>
+      <a href="/docs/" style="color:var(--ink);">Docs</a>
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <a class="tab-btn" href="/#products">Products</a>
+    <a class="tab-btn" href="/#pricing">Pricing</a>
+  </div>
+</nav>
+
+<div class="docs-layout">
+
+  <!-- Sidebar -->
+  <div class="docs-sidebar">
+    <nav>
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Getting started</span>
+        <a class="sidebar-link" href="#intro">Overview</a>
+        <a class="sidebar-link" href="#quickstart">Quickstart</a>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">.elf format</span>
+        <a class="sidebar-link" href="#elf-spec">Spec v0.2</a>
+        <a class="sidebar-link sub" href="#elf-manifest">Manifest</a>
+        <a class="sidebar-link sub" href="#elf-corpus">Corpus</a>
+        <a class="sidebar-link sub" href="#elf-runtime">Runtime</a>
+        <a class="sidebar-link sub" href="#elf-fingerprint">Fingerprinting</a>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Forge CLI</span>
+        <a class="sidebar-link" href="#foundry-install">Install</a>
+        <a class="sidebar-link" href="#foundry-seeds">seeds.yaml</a>
+        <a class="sidebar-link" href="#foundry-commands">Commands</a>
+        <a class="sidebar-link" href="#foundry-rubrics">Rubrics</a>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Guides</span>
+        <a class="sidebar-link" href="#guide-notebookelf">NotebookELF</a>
+        <a class="sidebar-link" href="#guide-webelves">Webelves</a>
+        <a class="sidebar-link" href="#guide-codelves">Codelves</a>
+      </div>
+      <div class="sidebar-section">
+        <span class="sidebar-section-label">Tutorial</span>
+        <a class="sidebar-link" href="#tutorial">Build your own .elf</a>
+        <a class="sidebar-link sub" href="#tutorial-seeds">1. Write seeds</a>
+        <a class="sidebar-link sub" href="#tutorial-run">2. Run Forge</a>
+        <a class="sidebar-link sub" href="#tutorial-open">3. Open the artifact</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Body -->
+  <div class="docs-body">
+
+    <div style="margin-bottom:8px;font-size:10px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.18em;">Documentation · v0.2</div>
+    <h1>webelves docs</h1>
+    <p style="font-size:15px;color:var(--ink-soft);margin-bottom:0;">Everything you need to build with <code style="font-size:13px;">.elf</code>, run Forge, and use the browser tools.</p>
+
+    <!-- ── INTRO ── -->
+    <h2 id="intro">Overview</h2>
+    <p>webelves is a suite of browser-native AI tools built around a single portable format: <code>.elf</code>. An <code>.elf</code> file is a self-contained HTML document bundling a knowledge corpus, a search index, optionally a language model, and a chat interface. Open it in any modern browser — offline, forever.</p>
+    <p>The stack has two layers:</p>
+    <ul>
+      <li><strong style="color:var(--ink);">Consumer tools</strong> (NotebookELF, Codelves/Python IDE — free; Webelves — Pro) — browser-only, no account.</li>
+      <li><strong style="color:var(--ink);">Synthesis pipeline</strong> (Forge) — Python CLI that produces <code>.elf</code> artifacts at scale. Pro+ tier.</li>
+    </ul>
+
+    <!-- ── QUICKSTART ── -->
+    <h2 id="quickstart">Quickstart</h2>
+    <h3>Use a browser tool (no setup)</h3>
+    <p>Navigate to any Open-tier tool and start immediately:</p>
+    <ul>
+      <li><a href="/open/notebook/" target="_blank" style="color:var(--teal);">NotebookELF</a> — add sources, chat, export .elf</li>
+      <li><a href="/open/ide/" target="_blank" style="color:var(--teal);">Python IDE</a> — write and run Python in-browser</li>
+      <li><a href="/open/webelves/" target="_blank" style="color:var(--teal);">Webelves</a> — local semantic search</li>
+    </ul>
+    <h3>Open demo .elf artifacts</h3>
+    <p>These are real static <code>.elf</code> files. Open them directly in the browser — no install, server, or API key.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0 28px;">
+      <a href="/demos/bayes.elf.html" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:18px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:var(--teal);margin-bottom:10px;">wikiforge · Wikipedia · v0.2</div>
+        <div style="font-size:18px;color:var(--ink);margin-bottom:8px;">Bayes Theorem</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">Grounded chat over posterior, likelihood ratio, and conjugate priors.</div>
+        <div style="font-size:12px;color:var(--teal);margin-top:14px;">Open .elf →</div>
+      </a>
+      <a href="/demos/demo.elf.html" target="_blank" rel="noopener" style="display:block;text-decoration:none;color:inherit;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:18px;">
+        <div style="font-size:12px;text-transform:uppercase;letter-spacing:.16em;color:var(--teal);margin-bottom:10px;">Forge Phase 2 · reference · v0.2</div>
+        <div style="font-size:18px;color:var(--ink);margin-bottom:8px;">Reference Demo</div>
+        <div style="font-size:13px;color:var(--ink-soft);line-height:1.6;">The canonical v0.2 artifact, fingerprint-verified against the open spec.</div>
+        <div style="font-size:12px;color:var(--teal);margin-top:14px;">Open .elf →</div>
+      </a>
+    </div>
+    <h3>Run Forge (Pro+)</h3>
+    <pre><code>pip install forge-elf
+forge loop --seeds my-topics.yaml</code></pre>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- .ELF FORMAT SPEC                           -->
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="elf-spec">.elf format — Spec v0.2 <span class="tag teal">open</span></h2>
+    <p>An <code>.elf</code> file is a valid HTML document. All data is embedded inline as <code>&lt;script&gt;</code> tags — no external files, no CDN dependencies for core functionality. The format is versioned; this describes v0.2.</p>
+
+    <h3 id="elf-manifest">Manifest</h3>
+    <p>Every <code>.elf</code> has exactly one manifest block:</p>
+    <pre><code>&lt;script type="application/json" id="elf-manifest"&gt;
+{
+  "version": "0.2",
+  "title": "Bayes Theorem",
+  "fingerprint": "sha256:a3f9...",
+  "resources": [
+    { "id": "corpus-0", "role": "segment-set", "encoding": "base64" },
+    { "id": "runtime",  "role": "runtime",     "encoding": "inline" }
+  ]
+}
+&lt;/script&gt;</code></pre>
+    <p>The manifest is serialized using <a href="https://www.rfc-editor.org/rfc/rfc8785" style="color:var(--teal);">RFC 8785 JCS (JSON Canonicalization Scheme)</a> before hashing. Key ordering is lexicographic, no insignificant whitespace.</p>
+
+    <h3 id="elf-corpus">Corpus</h3>
+    <p>The corpus is a JSON array of passage objects, base64-encoded, embedded in a resource script block:</p>
+    <pre><code>&lt;script type="application/octet-stream" id="corpus-0"&gt;
+  &lt;!-- base64-encoded JSON array --&gt;
+&lt;/script&gt;</code></pre>
+    <p>Each passage object:</p>
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>id</code></td><td>string</td><td>Unique passage identifier</td></tr>
+      <tr><td><code>text</code></td><td>string</td><td>The passage text</td></tr>
+      <tr><td><code>source</code></td><td>string</td><td>Source document title or URL</td></tr>
+      <tr><td><code>embedding</code></td><td>number[]</td><td>Pre-computed embedding vector (optional)</td></tr>
+    </table>
+
+    <h3 id="elf-runtime">Runtime</h3>
+    <p>The runtime is a self-contained JavaScript module inlined into the HTML. Two implementations ship:</p>
+    <ul>
+      <li><strong style="color:var(--ink);">wllama runtime</strong> — loads a GGUF model via llama.cpp compiled to WASM. Full offline inference. Requires <code>SharedArrayBuffer</code> (COOP/COEP headers).</li>
+      <li><strong style="color:var(--ink);">transformers.js runtime</strong> — loads an ONNX model via Xenova transformers.js. Broader compatibility, no special headers required.</li>
+    </ul>
+    <p>If no model is present, the runtime falls back to BM25 keyword search over the corpus — still fully functional, no AI inference required.</p>
+
+    <h3 id="elf-fingerprint">Fingerprinting</h3>
+    <p>Identity is derived from content, not file path or timestamp:</p>
+    <pre><code>fingerprint = "sha256:" + hex(SHA256(JCS(manifest)))</code></pre>
+    <p>The same artifact — same title, same passages, same resources — always produces the same fingerprint. This makes <code>.elf</code> files content-addressable and auditable without a server.</p>
+    <div class="callout">Changing any field in the manifest (title, a resource ID, a passage) changes the fingerprint. The fingerprint shown in the Forge toolbar is live-computed.</div>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- FOUNDRY CLI                                -->
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="foundry-install">Forge CLI <span class="tag rose">Pro+</span></h2>
+    <p>Forge is a Python package. Python 3.10+ required. No Node.js dependencies.</p>
+    <pre><code>pip install forge-elf
+
+# verify
+forge --version</code></pre>
+    <div class="callout warn">Forge is in active development. The CLI is functional for Phase 1–2 (pipeline scaffold + .elf builder). Phase 3 (quality judge) is partial. Check <a href="/about.html#foundry" style="color:var(--warn);">about → Forge roadmap</a> for current status.</div>
+
+    <h3 id="foundry-seeds">seeds.yaml</h3>
+    <p>A seeds file is a YAML list of topics to synthesize. Each entry can be a bare string or a structured object:</p>
+    <pre><code># Simple list
+topics:
+  - Bayes Theorem
+  - Kalman Filter
+  - PageRank algorithm
+
+# Structured (with hints)
+topics:
+  - title: Bayes Theorem
+    hints:
+      - posterior probability
+      - likelihood ratio
+      - conjugate priors
+    depth: thorough          # brief | standard | thorough
+    lang: en</code></pre>
+
+    <h3 id="foundry-commands">Commands</h3>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><code>forge loop</code></td><td>Run the full generate → judge → refine → package loop</td></tr>
+      <tr><td><code>forge build</code></td><td>Build a single .elf from an existing article JSON</td></tr>
+      <tr><td><code>forge judge</code></td><td>Run the discriminator on a candidate article</td></tr>
+      <tr><td><code>forge status</code></td><td>Show pipeline status for a seeds file run</td></tr>
+    </table>
+    <pre><code># Full pipeline (cloud key)
+forge loop --seeds topics.yaml --workers 4
+
+# Fully offline (local SmolLM2 or Mistral)
+forge loop --offline --seeds topics.yaml
+
+# Single topic, build only
+forge build --topic "Bayes Theorem" --out bayes.elf.html</code></pre>
+
+    <h3 id="foundry-rubrics">Quality rubrics</h3>
+    <p>The discriminator scores each article against a YAML rubric. Default rubric ships with Forge; override per-domain:</p>
+    <pre><code># rubric.yaml
+rubric:
+  accuracy:
+    weight: 0.4
+    criteria: "Claims are factually correct and supported by sources"
+  clarity:
+    weight: 0.3
+    criteria: "Explanation is understandable to a non-expert"
+  depth:
+    weight: 0.2
+    criteria: "Topic is covered with sufficient detail"
+  citations:
+    weight: 0.1
+    criteria: "At least 2 distinct sources referenced"
+
+pass_threshold: 0.72
+max_retries: 3</code></pre>
+    <pre><code>forge loop --seeds topics.yaml --rubric rubric.yaml</code></pre>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- PRODUCT GUIDES                             -->
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="guide-notebookelf">Guide: NotebookELF <span class="tag teal">free</span></h2>
+    <p>NotebookELF is a browser studio for building and chatting with knowledge bases, then exporting them as portable <code>.elf</code> files.</p>
+    <h3>1. Add sources</h3>
+    <p>From the notebook workspace, open the Sources panel (left). You can:</p>
+    <ul>
+      <li><strong style="color:var(--ink);">Drop a PDF</strong> — processed client-side via pdf.js. No upload.</li>
+      <li><strong style="color:var(--ink);">Paste text</strong> — any freeform content, plain text or markdown.</li>
+      <li><strong style="color:var(--ink);">Add a URL</strong> — page is fetched, Readability-extracted, chunked.</li>
+    </ul>
+    <h3>2. Chat</h3>
+    <p>Ask anything in the Chat panel (center). Every answer includes structured citations — passage ID, source title, and the exact text span the answer drew from. Citations are machine-readable, not decoration.</p>
+    <h3>3. Export as .elf</h3>
+    <p>Hit <strong>Build</strong> in the toolbar. NotebookELF packages all sources, embeddings, and the chat runtime into one <code>.elf.html</code> file. Download it. Share it. Open it on any machine — offline.</p>
+    <div class="callout">All data lives in OPFS (Origin Private File System) — the browser's sandboxed local filesystem. Nothing is uploaded. Clear browser storage and the notebooks are gone — export a backup first.</div>
+
+    <h2 id="guide-webelves">Guide: Webelves <span class="tag warn">Pro</span></h2>
+    <p>Webelves is a browser-native local search engine — Perplexity-style grounded answers, all inference client-side.</p>
+    <h3>First run — model download</h3>
+    <p>On first load, Webelves downloads the default model (SmolLM2-360M-Instruct) and caches it in OPFS. Subsequent loads are instant — the model is already on disk, and inference runs fully offline.</p>
+    <h3>Search</h3>
+    <p>Type a question. Webelves:</p>
+    <ul>
+      <li>Queries your configured SearXNG instance (or CORS proxy) for top results</li>
+      <li>Fetches and Readability-extracts top 4 pages</li>
+      <li>Embeds chunks with MiniLM, cosine-ranks to top 5</li>
+      <li>Feeds ranked passages + question to the local GGUF model</li>
+      <li>Streams the answer with inline <code>[N]</code> citations</li>
+    </ul>
+    <h3>SearXNG setup</h3>
+    <p>Webelves requires a search backend. Options:</p>
+    <ul>
+      <li><strong style="color:var(--ink);">Self-hosted SearXNG</strong> — run locally at <code>localhost:8080</code>, set in Settings.</li>
+      <li><strong style="color:var(--ink);">Public instance</strong> — enter any public SearXNG URL in Settings. CORS may vary.</li>
+    </ul>
+    <pre><code># Quick SearXNG with Docker
+docker run -d -p 8080:8080 searxng/searxng</code></pre>
+
+    <h2 id="guide-codelves">Guide: Codelves (Python IDE) <span class="tag teal">free</span></h2>
+    <p>Codelves is a browser-native Python IDE powered by Pyodide — the full CPython runtime compiled to WebAssembly.</p>
+    <h3>Running code</h3>
+    <ul>
+      <li><strong style="color:var(--ink);">Ctrl+Enter</strong> — run the current editor contents</li>
+      <li><strong style="color:var(--ink);">Tab</strong> — insert 4 spaces (no literal tabs)</li>
+      <li><strong style="color:var(--ink);">Clear</strong> — wipe the output panel</li>
+    </ul>
+    <h3>Available packages</h3>
+    <p>NumPy and Matplotlib are pre-installed. Install others at runtime:</p>
+    <pre><code>import micropip
+await micropip.install('scikit-learn')
+
+from sklearn.linear_model import LinearRegression</code></pre>
+    <h3>Matplotlib output</h3>
+    <p>Figures are captured and rendered as images inline in the output panel — no display server needed.</p>
+    <pre><code>import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.linspace(0, 2*np.pi, 100)
+plt.plot(x, np.sin(x))
+plt.title('sin(x)')
+plt.show()   # renders inline</code></pre>
+
+    <!-- ══════════════════════════════════════════ -->
+    <!-- TUTORIAL: BUILD YOUR OWN .ELF             -->
+    <!-- ══════════════════════════════════════════ -->
+    <h2 id="tutorial">Tutorial: Build your own .elf</h2>
+    <p>End-to-end walkthrough — from a topic list to an offline-ready <code>.elf</code> artifact.</p>
+    <div class="callout warn">This tutorial uses the Forge CLI (Pro+). If you don't have access yet, you can <a href="/#forge" style="color:var(--warn);">join the waitlist</a> or use NotebookELF (Open tier) to build a .elf manually from your own sources.</div>
+
+    <h3 id="tutorial-seeds">1. Write a seeds file</h3>
+    <pre><code># my-topics.yaml
+topics:
+  - title: Bayesian inference
+    hints: [posterior, prior, likelihood, Bayes rule]
+    depth: thorough
+  - title: Kalman filter
+    hints: [state estimation, prediction, update step]
+    depth: standard</code></pre>
+
+    <h3 id="tutorial-run">2. Run Forge</h3>
+    <pre><code># with an API key (fastest)
+export ELF_LLM_API_KEY=sk-ant-...
+forge loop --seeds my-topics.yaml --workers 2
+
+# fully offline (local model)
+forge loop --offline --seeds my-topics.yaml</code></pre>
+    <p>Forge writes progress to <code>output/run-{timestamp}/</code>:</p>
+    <pre><code>output/
+  run-20260519-143200/
+    bayesian-inference.elf.html   ✓ accepted
+    kalman-filter.elf.html        ✓ accepted
+    run.log                       # full generate/judge/refine trace</code></pre>
+
+    <h3 id="tutorial-open">3. Open the artifact</h3>
+    <p>Serve the output directory with any static HTTP server (required for COEP headers if the .elf uses a GGUF model):</p>
+    <pre><code>node website/server.mjs
+# or
+python -m http.server 8000</code></pre>
+    <p>Navigate to <code>output/run-.../bayesian-inference.elf.html</code>. The chat interface loads. Ask it anything — all inference runs locally in your browser tab.</p>
+    <div class="callout">The file is self-contained. Copy it to a USB drive, email it, or drop it on another machine. As long as the recipient has a modern browser, it works — no internet, no account, no server.</div>
+
+  </div><!-- /docs-body -->
+</div><!-- /docs-layout -->
+
+<footer>
+  <span>© 2026 <span class="footer-logo">webelves</span> — Embedded Language Format</span>
+  <div class="footer-links">
+    <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>
+  </div>
+  <span style="color:var(--ink-faint);">License covers the .elf format &amp; artifacts; subscriptions are not a license.</span>
+</footer>
+
+<script type="module" src="/shared/account.js"></script>
+</body>
+</html>

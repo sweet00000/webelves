@@ -1,0 +1,20 @@
+# Cloudflare Pages headers.
+# COEP=credentialless enables SharedArrayBuffer (wllama / onnxruntime threads)
+# while still allowing cross-origin model/lib fetches (jsDelivr, HF) without
+# forcing CORP on every third-party byte.
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: credentialless
+  Cross-Origin-Resource-Policy: cross-origin
+
+# long-cache immutable build assets
+/css/*
+  Cache-Control: public, max-age=31536000, immutable
+/open/notebook/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/open/ide/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/open/webelves/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/open/forge/assets/*
+  Cache-Control: public, max-age=31536000, immutable

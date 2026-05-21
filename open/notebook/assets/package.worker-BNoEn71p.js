@@ -1,0 +1,1 @@
+function n(s){let t="";for(let e=0;e<s.length;e+=32768)t+=String.fromCharCode.apply(null,s.subarray(e,e+32768));return btoa(t)}self.onmessage=s=>{const{id:o,resources:t}=s.data;try{const e=t.map(a=>({id:a.id,base64:n(new Uint8Array(a.bytes))})),r={id:o,ok:!0,encoded:e};self.postMessage(r)}catch(e){const r={id:o,ok:!1,error:e.message??String(e)};self.postMessage(r)}};

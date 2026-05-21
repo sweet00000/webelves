@@ -1,0 +1,83 @@
+/* ════════════════════════════════════════════════════════════════
+   reskin.css — blend-theme overlay for content pages.
+   Load AFTER site.css. Re-maps the palette + type + corners so
+   about/webelves/docs match the new landing aesthetic, without
+   touching their markup, copy, or anchors.
+   No font import — reuses IBM Plex Mono already loaded by site.css.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg:          #08090a;
+  --bg-soft:     #0c0e10;
+  --bg-card:     #0f1113;
+  --bg-card2:    #15181a;
+  --border:      #1e2225;
+  --border-soft: #16191b;
+
+  --ink:        #f2f3f2;
+  --ink-soft:   #a4aaa8;
+  --ink-faint:  #6b7270;
+
+  /* collapse the old multi-accent into the blend: teal leads, rest muted */
+  --accent:   #5fcfb8;
+  --accent2:  #7cdcc8;
+  --teal:     #5fcfb8;
+  --teal-dim: #3a8a78;
+  --sky:      #8fb3c4;
+  --warn:     #c9a96a;
+  --rose:     #c98a94;
+}
+
+/* premium type; drop the scanline + busy gradient */
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  background-image: radial-gradient(ellipse 70% 55% at 72% -5%, rgba(95,207,184,0.06) 0%, transparent 60%);
+}
+body::before { display: none !important; }
+
+/* ambient twirling smoke (markup-free) */
+body::after {
+  content: ''; position: fixed; inset: -40%; z-index: -1; pointer-events: none;
+  background:
+    conic-gradient(from 0deg at 70% 30%, transparent 0deg, rgba(95,207,184,0.07) 60deg, transparent 150deg, rgba(143,179,196,0.05) 240deg, transparent 330deg);
+  filter: blur(70px);
+  animation: smoke-spin 120s linear infinite;
+}
+@keyframes smoke-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { body::after { animation: none !important; } }
+
+h1, h2 {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+  letter-spacing: -0.03em;
+}
+h1 em, h1 .ht, h1 .hw { font-style: normal; }
+code, .section-label, .hero-eyebrow, .nav-logo-sub,
+.card-num, .benefit-tag, .pricing-badge, .demo-card-source,
+.sidebar-section-label, .t-comment, .t-cmd, .t-arg {
+  font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* sharpen corners */
+.card, .product-card, .pricing-card, .demo-card, .benefit, .terminal,
+.plan-block, .waitlist, .key-input, .toast, .nav-tabs, .hero-visual,
+.hv-chrome, .callout, .docs-sidebar, pre, .nav-cta, .tab-btn,
+.btn-primary, .btn-ghost, .btn-teal, .btn-paid, .btn-disabled,
+.hv-omnibox, .hv-tab, .hv-action-btn, .hv-qai-input, .terminal,
+input, .tier-badge { border-radius: 4px !important; }
+.cards, .product-grid, .benefits, .demo-cards, .pricing-grid { border-radius: 6px !important; }
+
+/* glassy nav like the landing */
+nav { background: rgba(8,9,10,0.72); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+
+/* harmonize brand marks: gradient nav logo, teal footer */
+.nav-logo-mark {
+  background: linear-gradient(120deg, #fff 20%, var(--teal) 115%);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent !important;
+}
+.footer-logo { color: var(--teal) !important; }
+
+/* slightly roomier section rhythm to echo the landing */
+section { padding-top: 80px; padding-bottom: 80px; }

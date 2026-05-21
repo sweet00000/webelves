@@ -1,0 +1,27 @@
+﻿.git
+.git/**
+.wrangler
+.wrangler/**
+node_modules
+node_modules/**
+
+# Dev-only files, not public site assets.
+.gitignore
+.assetsignore
+wrangler.jsonc
+server.mjs
+tools
+tools/**
+*.md
+
+# Heavy/private artifacts must never deploy with the static site.
+*.gguf
+**/*.gguf
+*.bak
+**/*.bak
+.env
+.env.*
+
+# Empty placeholder files are useful in git, not on the public site.
+**/.gitignore
+**/.gitkeep
