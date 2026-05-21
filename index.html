@@ -46,7 +46,7 @@
   <div class="wrap hero-grid">
     <div class="reveal">
       <div class="badge"><span class="dot"></span> Phase 1 · open spec · runs on your machine</div>
-      <h1>Your AI, <span class="grad">offline and portable.</span></h1>
+      <h1>Your AI, <span class="grad">offline and private.</span></h1>
       <p class="hero-sub">
         webelves is the hub for browser-native AI tools. Turn your sources into a grounded
         chat, run real Python, then export a single <code>.elf</code> file that works in any
@@ -84,9 +84,9 @@
           </div>
         </div>
         <div id="termMsgs"></div>
-        <div class="term-status" id="termStatus">SmolLM2 via transformers.js · grounded on an embedded Bayes knowledge base · nothing loaded yet</div>
+        <div class="term-status" id="termStatus">SmolLM2 via transformers.js · grounded on an embedded Bayes knowledge base · loading on startup</div>
         <div class="term-bar-prog" id="termProg" style="display:none"><i></i></div>
-        <button class="btn btn-fill btn-sm term-load" id="termLoad" onclick="elf.load()">Load model &amp; chat →</button>
+        <button class="btn btn-fill btn-sm term-load" id="termLoad" onclick="elf.load()">Loading model…</button>
         <div class="term-input" id="termInputRow" style="display:none">
           <input id="termInput" placeholder="Ask about Bayes' theorem…" autocomplete="off">
           <button class="term-send" id="termSend" onclick="elf.ask()">Send ↵</button>
@@ -396,10 +396,9 @@ async function ask(){
 $('termInput').addEventListener('keydown', e => { if(e.key === 'Enter') ask(); });
 window.elf = { load, ask };
 
-// Auto-load: if the model was already downloaded on a previous page/visit, it's
-// in shared Cache Storage — load it instantly without making the user click.
-// First-ever visit still uses the button (no surprise multi-hundred-MB pull).
-if (isCached()) load();
+// Auto-load the Bayes artifact on startup. transformers.js stores the model in
+// same-origin Cache Storage, so later Codelves/Notebook pages can reuse it.
+load();
 </script>
 
 <script type="module" src="/shared/account.js"></script>
