@@ -33,39 +33,54 @@
   .about-table { width:100%; border-collapse:collapse; margin-top:18px; font-size:13px; color:var(--ink-soft); overflow:hidden; border-radius:8px; }
   .about-table th, .about-table td { border:1px solid var(--border); padding:12px 14px; text-align:left; }
   .about-table th { color:var(--ink); background:var(--surface); }
-  @media (max-width:900px){ .about-card, .about-card.wide { grid-column:1/-1; } .about-list li { grid-template-columns:1fr; gap:6px; } }
+  .about-page .nav .wrap { align-items:center; }
+  .about-page .nav-links a[aria-current="page"] { color:var(--ink); }
+  .about-page main { overflow:hidden; }
+  @media (max-width:900px){
+    .about-card, .about-card.wide { grid-column:1/-1; }
+    .about-list li { grid-template-columns:1fr; gap:6px; }
+    .about-hero { padding-top:120px; }
+  }
+  @media (max-width:560px){
+    .about-nav a { flex:1 1 calc(50% - 8px); text-align:center; }
+    .about-table { display:block; overflow-x:auto; white-space:nowrap; }
+  }
 </style>
 </head>
-<body>
+<body class="about-page">
 <div class="geo-field" aria-hidden="true"><i class="geo geo-a"></i><i class="geo geo-b"></i><i class="geo geo-c"></i></div>
 
-<header class="nav">
-  <a class="brand" href="/"><span class="brand-mark grad">webelves</span><span class="brand-sub">offline AI</span></a>
-  <button class="menu-btn" onclick="document.body.classList.toggle('menu-open')" aria-label="Menu"><span></span><span></span></button>
-  <nav class="nav-links" id="navLinks">
-    <a href="/#products">Products</a>
-    <a href="/#pricing">Pricing</a>
-    <a href="about.html" aria-current="page">About</a>
-    <a href="docs/">Docs</a>
-    <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
-  </nav>
-  <div class="nav-actions">
-    <a href="/open/notebook/" class="btn btn-fill btn-sm" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="/"><span class="brand-mark grad">webelves</span><span class="brand-sub">offline AI</span></a>
+    <nav class="nav-links" id="navLinks">
+      <a href="/#products">Products</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/about.html" aria-current="page">About</a>
+      <a href="/docs/">Docs</a>
+      <a href="https://codelves.com" target="_blank" rel="noopener">codelves.com ↗</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="/open/notebook/" class="btn btn-fill btn-sm" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+    </div>
   </div>
 </header>
 
 <main>
 <section class="hero about-hero">
-  <div class="hero-copy reveal">
-    <span class="eyebrow">Forge - .elf format - browser platform</span>
-    <h1>The system behind <span class="grad">portable AI knowledge.</span></h1>
-    <p class="hero-sub">webelves is a browser-native AI stack built around one idea: knowledge tools should run locally, cite their sources, and export into files you can keep. This page holds the full picture - Forge, NotebookELF, the .elf format, storage, and the rules we will not compromise on.</p>
-    <div class="hero-ctas">
-      <a href="/open/notebook/" class="btn btn-fill" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
-      <a href="docs/" class="btn btn-ghost">Read the docs →</a>
-    </div>
-    <div class="about-nav">
-      <a href="#foundry">Forge</a><a href="#format">.elf format</a><a href="#notebookelf">NotebookELF</a><a href="#storage">Storage</a><a href="#commitments">Commitments</a><a href="#work-with-us">Work with us</a>
+  <div class="wrap">
+    <div class="hero-copy reveal">
+      <span class="eyebrow">Forge - .elf format - browser platform</span>
+      <h1>The system behind <span class="grad">portable AI knowledge.</span></h1>
+      <p class="hero-sub">webelves is a browser-native AI stack built around one idea: knowledge tools should run locally, cite their sources, and export into files you can keep. This page holds the full picture - Forge, NotebookELF, the .elf format, storage, and the rules we will not compromise on.</p>
+      <div class="hero-ctas">
+        <a href="/open/notebook/" class="btn btn-fill" target="_blank" rel="noopener">Open NotebookELF <span class="arr">→</span></a>
+        <a href="/docs/" class="btn btn-ghost">Read the docs →</a>
+      </div>
+      <div class="about-nav">
+        <a href="#foundry">Forge</a><a href="#format">.elf format</a><a href="#notebookelf">NotebookELF</a><a href="#storage">Storage</a><a href="#commitments">Commitments</a><a href="#work-with-us">Work with us</a>
+      </div>
     </div>
   </div>
 </section>
@@ -196,6 +211,11 @@
 <div class="toast" id="toast"></div>
 <script>
 (() => {
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  navToggle?.addEventListener('click', () => navLinks?.classList.toggle('open'));
+  navLinks?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => navLinks.classList.remove('open')));
+
   const els = document.querySelectorAll('.reveal');
   if (!els.length) return;
   if (!('IntersectionObserver' in window)) {

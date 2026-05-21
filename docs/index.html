@@ -12,9 +12,10 @@
 .docs-layout {
   display: grid;
   grid-template-columns: 220px 1fr;
-  max-width: 1100px;
+  max-width: 1180px;
   margin: 0 auto;
-  min-height: calc(100vh - 56px);
+  min-height: 100vh;
+  padding-top: 56px;
   position: relative; z-index: 1;
 }
 @media (max-width: 760px) {
@@ -22,14 +23,24 @@
   .docs-sidebar { display: none; }
 }
 .docs-sidebar {
-  padding: 80px 0 40px;
+  padding: 0 0 40px;
   border-right: 1px solid var(--border);
   position: sticky; top: 56px;
   height: calc(100vh - 56px);
   overflow-y: auto;
   scrollbar-width: thin;
 }
-.docs-sidebar nav { padding: 24px 20px; }
+.docs-sidebar nav {
+  position: static;
+  inset: auto;
+  z-index: auto;
+  display: block;
+  height: auto;
+  padding: 24px 20px;
+  border: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
 .sidebar-section { margin-bottom: 28px; }
 .sidebar-section-label {
   font-size: 9px; text-transform: uppercase; letter-spacing: .2em;
@@ -46,8 +57,19 @@
 .sidebar-link.sub { padding-left: 20px; font-size: 11px; color: var(--ink-faint); }
 .sidebar-link.sub:hover { color: var(--ink-soft); }
 
-.docs-body { padding: 80px 48px 80px; }
-@media (max-width: 760px) { .docs-body { padding: 80px 20px 40px; } }
+.docs-body {
+  min-width: 0;
+  max-width: 760px;
+  padding: 44px 48px 80px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .docs-layout { padding-top: 92px; }
+  .docs-sidebar { top: 92px; height: calc(100vh - 92px); }
+}
+@media (max-width: 760px) {
+  .docs-body { padding: 34px 20px 48px; max-width: none; }
+}
 
 .docs-body h1 {
   font-family: 'IBM Plex Serif', Georgia, serif;
@@ -73,7 +95,7 @@
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 6px; padding: 16px 18px; margin: 14px 0 20px;
   overflow-x: auto; font-size: 12px; line-height: 1.65;
-  color: var(--ink); max-width: 680px;
+  color: var(--ink); max-width: 100%;
 }
 .docs-body pre code { background: none; border: none; padding: 0; font-size: 12px; color: inherit; }
 .docs-body .callout {
@@ -87,6 +109,9 @@
 .docs-body th { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); color: var(--ink-faint); font-size: 10px; text-transform: uppercase; letter-spacing: .15em; }
 .docs-body td { padding: 8px 12px; border-bottom: 1px solid var(--border-soft); color: var(--ink-soft); }
 .docs-body td code { font-size: 11px; }
+@media (max-width: 560px) {
+  .docs-body table { display:block; overflow-x:auto; white-space:nowrap; }
+}
 .tag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .15em; padding: 2px 7px; border-radius: 3px; margin-left: 8px; vertical-align: middle; }
 .tag.teal { background: rgba(95,207,184,.12); color: var(--teal); }
 .tag.warn { background: rgba(240,198,116,.12); color: var(--warn); }
