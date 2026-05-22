@@ -7,7 +7,7 @@
     <script type="module" crossorigin src="/open/notebook/assets/index-BZyBrZFR.js"></script>
     <link rel="stylesheet" crossorigin href="/open/notebook/assets/index-7Fj_snYD.css">
     <style>
-/* ── Mobile panel switcher (injected) ─────────────────── */
+/* ── Mobile panel tab-bar ───────────────────────────────── */
 #mob-tabbar {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
@@ -19,84 +19,102 @@
   color: #9a9890; font-family: system-ui, sans-serif; font-size: 11px;
   cursor: pointer; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 3px; padding: 6px 0;
-  transition: color .15s;
+  transition: color .15s; -webkit-tap-highlight-color: transparent;
 }
 #mob-tabbar button:last-child { border-right: none; }
-#mob-tabbar button.mob-active { color: #5fcfb8; }
-#mob-tabbar button .mob-icon { font-size: 16px; line-height: 1; }
+#mob-tabbar button.mob-active { color: #5fcfb8; background: rgba(95,207,184,.05); }
+#mob-tabbar .mob-icon { font-size: 17px; line-height: 1; }
 @media (max-width: 700px) {
   #mob-tabbar { display: flex; }
-  /* push app up so content isn't behind tab bar */
-  body { padding-bottom: 52px; }
-  /* hide resize handles */
+  body { padding-bottom: 52px !important; }
+  /* hide drag handles */
   .group.relative.flex-shrink-0.bg-edge { display: none !important; }
-  /* panels fill full width when shown, hidden otherwise */
-  .mgone { display: none !important; }
-  .mpanel { display: flex !important; width: 100% !important; min-width: 0 !important; flex: 1 !important; }
 }
     </style>
     <script>
-/* ── NotebookELF mobile panel switcher ─────────────────── */
 (function () {
-  var isMob = window.matchMedia('(max-width: 700px)');
-  if (!isMob.matches) return;
+  if (!window.matchMedia('(max-width: 700px)').matches) return;
 
-  /* Pre-set layout so SolidJS ResizableSplit doesn't fight us */
-  localStorage.setItem('forge.layout.v1.nb.col1', '9999');
+  /* Default view = Chat. Pre-set so SolidJS signal reads 0 for Sources width
+     and 9999 for Chat width (fills inner container, Studio gets 0). */
+  localStorage.setItem('forge.layout.v1.nb.col1', '0');
   localStorage.setItem('forge.layout.v1.nb.col2', '9999');
 
-  var TABS = [
-    { id: 'sources', label: 'Sources', icon: '📂' },
-    { id: 'chat',    label: 'Chat',    icon: '💬' },
-    { id: 'studio',  label: 'Studio',  icon: '⚡' },
-  ];
   var current = 'chat';
+  var P = null; /* panel refs: { sources, inner, chat, studio } */
 
+  /* ── style helpers ─────────────────────────── */
+  function s(el, show) {
+    if (show) {
+      el.style.setProperty('display',   'block',  'important');
+      el.style.setProperty('width',     '100%',   'important');
+      el.style.setProperty('min-width', '0',      'important');
+      el.style.setProperty('height',    '100%',   'important');
+      el.style.setProperty('overflow',  'hidden', 'important');
+      el.style.removeProperty('flex');
+    } else {
+      el.style.setProperty('display', 'none', 'important');
+    }
+  }
+  function sf(el, show) { /* flex container variant (inner wrapper) */
+    if (show) {
+      el.style.setProperty('display',   'flex',    'important');
+      el.style.setProperty('flex',      '1 1 100%','important');
+      el.style.setProperty('width',     '100%',    'important');
+      el.style.setProperty('min-width', '0',       'important');
+      el.style.setProperty('height',    '100%',    'important');
+      el.style.setProperty('overflow',  'hidden',  'important');
+    } else {
+      el.style.setProperty('display', 'none', 'important');
+    }
+  }
+
+  /* ── apply active tab ──────────────────────── */
   function applyTab(tab) {
     current = tab;
-    /* panels: sources=col1, inner-wrapper=sibling, chat=col2-left, studio=col2-right */
-    var panels = findPanels();
-    if (!panels) return;
-    panels.sources.classList.toggle('mgone', tab !== 'sources');
-    panels.sources.classList.toggle('mpanel', tab === 'sources');
-    panels.inner.classList.toggle('mgone', tab === 'sources');
-    panels.inner.classList.toggle('mpanel', tab !== 'sources');
-    panels.chat.classList.toggle('mgone', tab !== 'chat');
-    panels.chat.classList.toggle('mpanel', tab === 'chat');
-    panels.studio.classList.toggle('mgone', tab !== 'studio');
-    panels.studio.classList.toggle('mpanel', tab === 'studio');
+    if (!P) return;
+    if (tab === 'sources') {
+      s(P.sources, true);
+      sf(P.inner,  false);
+    } else {
+      s(P.sources, false);
+      sf(P.inner,  true);
+      s(P.chat,    tab === 'chat');
+      s(P.studio,  tab === 'studio');
+    }
     document.querySelectorAll('#mob-tabbar button').forEach(function (b) {
       b.classList.toggle('mob-active', b.dataset.tab === tab);
     });
   }
 
+  /* ── find panels via confirmed class structure ─ */
   function findPanels() {
-    /* outer split: .flex.h-full.w-full.overflow-hidden at root level */
-    var splits = Array.from(document.querySelectorAll('.flex.h-full.w-full.overflow-hidden'));
+    var splits = document.querySelectorAll('.flex.h-full.w-full.overflow-hidden');
     if (splits.length < 2) return null;
-    /* outermost split that contains the whole layout */
     var outer = splits[0];
-    var outerChildren = Array.from(outer.children).filter(function (c) {
-      return !c.classList.contains('group');
-    });
-    if (outerChildren.length < 2) return null;
-    var sources = outerChildren[0];
-    var inner   = outerChildren[1];
-    /* inner split */
-    var innerChildren = Array.from(inner.children).filter(function (c) {
-      return !c.classList.contains('group');
-    });
-    if (innerChildren.length < 2) return null;
-    var chat   = innerChildren[0];
-    var studio = innerChildren[1];
-    return { sources: sources, inner: inner, chat: chat, studio: studio };
+    var ok = Array.from(outer.children);
+    if (ok.length < 3) return null;
+    var sources = ok[0]; /* class="overflow-hidden", inline width set by Xe */
+    var inner   = ok[2]; /* class="flex-1 overflow-hidden" */
+    /* inner split lives inside inner */
+    var innerSplit = inner.querySelector('.flex.h-full.w-full.overflow-hidden');
+    if (!innerSplit) innerSplit = splits[1];
+    if (!innerSplit) return null;
+    var ik = Array.from(innerSplit.children);
+    if (ik.length < 3) return null;
+    return { sources: sources, inner: inner, chat: ik[0], studio: ik[2] };
   }
 
-  function injectTabBar() {
+  /* ── inject tab bar ────────────────────────── */
+  function inject() {
     if (document.getElementById('mob-tabbar')) return;
     var bar = document.createElement('div');
     bar.id = 'mob-tabbar';
-    TABS.forEach(function (t) {
+    [
+      { id: 'sources', label: 'Sources', icon: '📂' },
+      { id: 'chat',    label: 'Chat',    icon: '💬' },
+      { id: 'studio',  label: 'Studio',  icon: '⚡' },
+    ].forEach(function (t) {
       var btn = document.createElement('button');
       btn.dataset.tab = t.id;
       btn.innerHTML = '<span class="mob-icon">' + t.icon + '</span><span>' + t.label + '</span>';
@@ -107,17 +125,18 @@
     applyTab(current);
   }
 
-  /* Wait for SolidJS to render, then inject */
-  var attempts = 0;
-  function tryInject() {
-    var panels = findPanels();
-    if (panels) {
-      injectTabBar();
-    } else if (attempts++ < 40) {
-      setTimeout(tryInject, 150);
+  /* ── poll until SolidJS renders panels ─────── */
+  var tries = 0;
+  function tryInit() {
+    var p = findPanels();
+    if (p) {
+      P = p;
+      inject();
+    } else if (tries++ < 50) {
+      setTimeout(tryInit, 150);
     }
   }
-  document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInject, 300); });
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInit, 200); });
 })();
     </script>
   </head>
