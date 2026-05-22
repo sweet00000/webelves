@@ -525,3 +525,24 @@ footer a:hover { text-decoration: underline; }
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── SMALL SCREEN ADDITIONS ─────────────────────────── */
+@media (max-width: 560px) {
+  .hero { padding: 88px 16px 28px; gap: 20px; }
+  h1 { margin-bottom: 18px; }
+  .hero-ctas { flex-direction: column; align-items: stretch; }
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-ghost,
+  .hero-ctas .btn-teal { text-align: center; display: block; }
+  .key-input-row { flex-direction: column; }
+  .waitlist-row { flex-direction: column; }
+  .key-input { padding: 16px; }
+  .waitlist { padding: 20px 16px; }
+  footer { padding: 20px 16px; margin-top: 40px; }
+  .footer-links { gap: 12px; }
+  nav { padding-left: 12px; padding-right: 12px; }
+}
+@media (max-width: 380px) {
+  .tab-btn { padding: 5px 7px; font-size: 9px; }
+  .nav-logo-sub { display: none; }
+}

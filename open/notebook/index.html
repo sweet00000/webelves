@@ -6,6 +6,120 @@
     <title>NotebookELF</title>
     <script type="module" crossorigin src="/open/notebook/assets/index-BZyBrZFR.js"></script>
     <link rel="stylesheet" crossorigin href="/open/notebook/assets/index-7Fj_snYD.css">
+    <style>
+/* ── Mobile panel switcher (injected) ─────────────────── */
+#mob-tabbar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: #111315; border-top: 1px solid #252829;
+  height: 52px; align-items: stretch;
+}
+#mob-tabbar button {
+  flex: 1; background: none; border: none; border-right: 1px solid #252829;
+  color: #9a9890; font-family: system-ui, sans-serif; font-size: 11px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px; padding: 6px 0;
+  transition: color .15s;
+}
+#mob-tabbar button:last-child { border-right: none; }
+#mob-tabbar button.mob-active { color: #5fcfb8; }
+#mob-tabbar button .mob-icon { font-size: 16px; line-height: 1; }
+@media (max-width: 700px) {
+  #mob-tabbar { display: flex; }
+  /* push app up so content isn't behind tab bar */
+  body { padding-bottom: 52px; }
+  /* hide resize handles */
+  .group.relative.flex-shrink-0.bg-edge { display: none !important; }
+  /* panels fill full width when shown, hidden otherwise */
+  .mgone { display: none !important; }
+  .mpanel { display: flex !important; width: 100% !important; min-width: 0 !important; flex: 1 !important; }
+}
+    </style>
+    <script>
+/* ── NotebookELF mobile panel switcher ─────────────────── */
+(function () {
+  var isMob = window.matchMedia('(max-width: 700px)');
+  if (!isMob.matches) return;
+
+  /* Pre-set layout so SolidJS ResizableSplit doesn't fight us */
+  localStorage.setItem('forge.layout.v1.nb.col1', '9999');
+  localStorage.setItem('forge.layout.v1.nb.col2', '9999');
+
+  var TABS = [
+    { id: 'sources', label: 'Sources', icon: '📂' },
+    { id: 'chat',    label: 'Chat',    icon: '💬' },
+    { id: 'studio',  label: 'Studio',  icon: '⚡' },
+  ];
+  var current = 'chat';
+
+  function applyTab(tab) {
+    current = tab;
+    /* panels: sources=col1, inner-wrapper=sibling, chat=col2-left, studio=col2-right */
+    var panels = findPanels();
+    if (!panels) return;
+    panels.sources.classList.toggle('mgone', tab !== 'sources');
+    panels.sources.classList.toggle('mpanel', tab === 'sources');
+    panels.inner.classList.toggle('mgone', tab === 'sources');
+    panels.inner.classList.toggle('mpanel', tab !== 'sources');
+    panels.chat.classList.toggle('mgone', tab !== 'chat');
+    panels.chat.classList.toggle('mpanel', tab === 'chat');
+    panels.studio.classList.toggle('mgone', tab !== 'studio');
+    panels.studio.classList.toggle('mpanel', tab === 'studio');
+    document.querySelectorAll('#mob-tabbar button').forEach(function (b) {
+      b.classList.toggle('mob-active', b.dataset.tab === tab);
+    });
+  }
+
+  function findPanels() {
+    /* outer split: .flex.h-full.w-full.overflow-hidden at root level */
+    var splits = Array.from(document.querySelectorAll('.flex.h-full.w-full.overflow-hidden'));
+    if (splits.length < 2) return null;
+    /* outermost split that contains the whole layout */
+    var outer = splits[0];
+    var outerChildren = Array.from(outer.children).filter(function (c) {
+      return !c.classList.contains('group');
+    });
+    if (outerChildren.length < 2) return null;
+    var sources = outerChildren[0];
+    var inner   = outerChildren[1];
+    /* inner split */
+    var innerChildren = Array.from(inner.children).filter(function (c) {
+      return !c.classList.contains('group');
+    });
+    if (innerChildren.length < 2) return null;
+    var chat   = innerChildren[0];
+    var studio = innerChildren[1];
+    return { sources: sources, inner: inner, chat: chat, studio: studio };
+  }
+
+  function injectTabBar() {
+    if (document.getElementById('mob-tabbar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'mob-tabbar';
+    TABS.forEach(function (t) {
+      var btn = document.createElement('button');
+      btn.dataset.tab = t.id;
+      btn.innerHTML = '<span class="mob-icon">' + t.icon + '</span><span>' + t.label + '</span>';
+      btn.addEventListener('click', function () { applyTab(t.id); });
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(bar);
+    applyTab(current);
+  }
+
+  /* Wait for SolidJS to render, then inject */
+  var attempts = 0;
+  function tryInject() {
+    var panels = findPanels();
+    if (panels) {
+      injectTabBar();
+    } else if (attempts++ < 40) {
+      setTimeout(tryInject, 150);
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInject, 300); });
+})();
+    </script>
   </head>
   <body>
     <div id="root"></div>

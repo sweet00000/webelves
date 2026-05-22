@@ -6,6 +6,27 @@
     <title>Forge — .elf builder</title>
     <script type="module" crossorigin src="/open/forge/assets/index-CfMGp1Yb.js"></script>
     <link rel="stylesheet" crossorigin href="/open/forge/assets/index-D89m0k4x.css">
+    <style>
+@media (max-width: 700px) {
+  /* allow the app to scroll rather than clip */
+  html, body { overflow: auto !important; height: auto !important; }
+  #root { min-height: 100dvh; }
+  /* hide ResizableSplit drag handles */
+  .group.relative.flex-shrink-0.bg-edge { display: none !important; }
+  /* collapse flex rows → columns so panels stack */
+  .flex.h-full.w-full.overflow-hidden { flex-direction: column !important; height: auto !important; }
+  /* each panel takes full width */
+  .flex.h-full.w-full.overflow-hidden > * { width: 100% !important; min-width: 0 !important; }
+}
+    </style>
+    <script>
+(function () {
+  if (!window.matchMedia('(max-width: 700px)').matches) return;
+  /* prevent ResizableSplit from collapsing panels on mobile */
+  localStorage.setItem('forge.layout.v1.nb.col1', '9999');
+  localStorage.setItem('forge.layout.v1.nb.col2', '9999');
+})();
+    </script>
   </head>
   <body>
     <div id="root"></div>

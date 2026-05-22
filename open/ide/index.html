@@ -381,6 +381,13 @@ header {
   .sidebar.open { width: 200px; position: absolute; z-index: 10; height: 100%; top: 44px; }
   .llm-panel { width: 0; }
   .llm-panel.open { width: 100%; position: absolute; z-index: 10; height: calc(100% - 44px - 22px); top: 44px; }
+  .kbd-hint { display: none; }
+}
+@media (max-width: 480px) {
+  header { gap: 5px; padding: 0 8px; }
+  .logo-sub { display: none; }
+  .hdr-btn { padding: 4px 7px; font-size: 10px; }
+  .cur-file-wrap { padding: 0 4px; }
 }
 
 .empty-editor {
