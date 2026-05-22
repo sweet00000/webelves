@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#f7f8fb" />
     <script>
-      // Apply stored theme before paint to avoid flash.
       (function () {
         try {
           var p = JSON.parse(localStorage.getItem('webelves:app-prefs:v1') || '{}');
@@ -27,14 +26,95 @@
     <link rel="modulepreload" crossorigin href="./assets/react-CG5p9kEH.js">
     <link rel="stylesheet" crossorigin href="./assets/index-CV6_JTHo.css">
     <style>
+/* ── Mobile panel tab-bar (webelves) ────────────────────── */
+#mob-web-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  height: 52px; align-items: stretch;
+  background: var(--ink-0, #0f1012); border-top: 1px solid var(--ink-3, #2a2d30);
+}
+#mob-web-bar button {
+  flex: 1; background: none; border: none; border-right: 1px solid var(--ink-3, #2a2d30);
+  color: var(--paper-3, #9a9890); font-family: system-ui, sans-serif; font-size: 11px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px; padding: 6px 0;
+  transition: color .15s; -webkit-tap-highlight-color: transparent;
+}
+#mob-web-bar button:last-child { border-right: none; }
+#mob-web-bar button.mob-active { color: var(--accent, #5fcfb8); background: rgba(95,207,184,.05); }
+#mob-web-bar .mob-icon { font-size: 17px; line-height: 1; }
 @media (max-width: 700px) {
-  html, body { overflow: auto !important; }
-  /* stack any side-by-side panels vertically */
-  [style*="display: flex"], [style*="display:flex"] { flex-wrap: wrap !important; }
-  /* resize handles */
-  [class*="resize"], [class*="handle"], [class*="divider"] { display: none !important; }
+  #mob-web-bar { display: flex; }
+  body { padding-bottom: 52px !important; overflow: auto !important; }
+  /* hide react-resizable-panels drag handles */
+  [data-resize-handle] { display: none !important; }
 }
     </style>
+    <script>
+(function () {
+  if (!window.matchMedia('(max-width: 700px)').matches) return;
+
+  var current = 'search';
+  var P = null; /* { sources, search } */
+
+  function s(el, show) {
+    if (show) {
+      el.style.setProperty('display',   'flex',    'important');
+      el.style.setProperty('flex',      '1 1 100%','important');
+      el.style.setProperty('width',     '100%',    'important');
+      el.style.setProperty('min-width', '0',       'important');
+      el.style.setProperty('overflow',  'auto',    'important');
+    } else {
+      el.style.setProperty('display', 'none', 'important');
+    }
+  }
+
+  function applyTab(tab) {
+    current = tab;
+    if (!P) return;
+    s(P.sources, tab === 'sources');
+    s(P.search,  tab === 'search');
+    document.querySelectorAll('#mob-web-bar button').forEach(function (b) {
+      b.classList.toggle('mob-active', b.dataset.tab === tab);
+    });
+  }
+
+  function findPanels() {
+    /* react-resizable-panels: find horizontal group */
+    var group = document.querySelector('[data-panel-group][data-panel-group-direction="horizontal"]');
+    if (!group) return null;
+    var panels = Array.from(group.querySelectorAll(':scope > [data-panel]'));
+    if (panels.length < 2) return null;
+    /* first child = sources sidebar, last = main search/chat area */
+    return { sources: panels[0], search: panels[panels.length - 1] };
+  }
+
+  function inject() {
+    if (document.getElementById('mob-web-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'mob-web-bar';
+    [
+      { id: 'sources', label: 'Sources', icon: '📂' },
+      { id: 'search',  label: 'Search',  icon: '🔍' },
+    ].forEach(function (t) {
+      var btn = document.createElement('button');
+      btn.dataset.tab = t.id;
+      btn.innerHTML = '<span class="mob-icon">' + t.icon + '</span><span>' + t.label + '</span>';
+      btn.addEventListener('click', function () { applyTab(t.id); });
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(bar);
+    applyTab(current);
+  }
+
+  var tries = 0;
+  function tryInit() {
+    var p = findPanels();
+    if (p) { P = p; inject(); } else if (tries++ < 50) { setTimeout(tryInit, 150); }
+  }
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInit, 200); });
+})();
+    </script>
   </head>
   <body>
     <div id="root"></div>

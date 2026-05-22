@@ -7,24 +7,109 @@
     <script type="module" crossorigin src="/open/forge/assets/index-CfMGp1Yb.js"></script>
     <link rel="stylesheet" crossorigin href="/open/forge/assets/index-D89m0k4x.css">
     <style>
+/* ── Mobile panel tab-bar ───────────────────────────────── */
+#mob-forge-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+  background: #111315; border-top: 1px solid #252829;
+  height: 52px; align-items: stretch;
+}
+#mob-forge-bar button {
+  flex: 1; background: none; border: none; border-right: 1px solid #252829;
+  color: #9a9890; font-family: system-ui, sans-serif; font-size: 11px;
+  cursor: pointer; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px; padding: 6px 0;
+  transition: color .15s; -webkit-tap-highlight-color: transparent;
+}
+#mob-forge-bar button:last-child { border-right: none; }
+#mob-forge-bar button.mob-active { color: #5fcfb8; background: rgba(95,207,184,.05); }
+#mob-forge-bar .mob-icon { font-size: 17px; line-height: 1; }
 @media (max-width: 700px) {
-  /* allow the app to scroll rather than clip */
-  html, body { overflow: auto !important; height: auto !important; }
-  #root { min-height: 100dvh; }
-  /* hide ResizableSplit drag handles */
+  #mob-forge-bar { display: flex; }
+  body { padding-bottom: 52px !important; }
   .group.relative.flex-shrink-0.bg-edge { display: none !important; }
-  /* collapse flex rows → columns so panels stack */
-  .flex.h-full.w-full.overflow-hidden { flex-direction: column !important; height: auto !important; }
-  /* each panel takes full width */
-  .flex.h-full.w-full.overflow-hidden > * { width: 100% !important; min-width: 0 !important; }
 }
     </style>
     <script>
 (function () {
   if (!window.matchMedia('(max-width: 700px)').matches) return;
-  /* prevent ResizableSplit from collapsing panels on mobile */
-  localStorage.setItem('forge.layout.v1.nb.col1', '9999');
-  localStorage.setItem('forge.layout.v1.nb.col2', '9999');
+
+  /* Sources hidden by default; build area fills screen */
+  localStorage.setItem('forge.ws.sources', '0');
+
+  var current = 'build';
+  var P = null;
+
+  function s(el, show) {
+    if (show) {
+      el.style.setProperty('display',   'block',   'important');
+      el.style.setProperty('width',     '100%',    'important');
+      el.style.setProperty('min-width', '0',       'important');
+      el.style.setProperty('height',    '100%',    'important');
+      el.style.setProperty('overflow',  'hidden',  'important');
+      el.style.removeProperty('flex');
+    } else {
+      el.style.setProperty('display', 'none', 'important');
+    }
+  }
+  function sf(el, show) {
+    if (show) {
+      el.style.setProperty('display',   'flex',     'important');
+      el.style.setProperty('flex',      '1 1 100%', 'important');
+      el.style.setProperty('width',     '100%',     'important');
+      el.style.setProperty('min-width', '0',        'important');
+      el.style.setProperty('height',    '100%',     'important');
+      el.style.setProperty('overflow',  'hidden',   'important');
+    } else {
+      el.style.setProperty('display', 'none', 'important');
+    }
+  }
+
+  function applyTab(tab) {
+    current = tab;
+    if (!P) return;
+    s(P.sources, tab === 'sources');
+    sf(P.build, tab !== 'sources');
+    document.querySelectorAll('#mob-forge-bar button').forEach(function (b) {
+      b.classList.toggle('mob-active', b.dataset.tab === tab);
+    });
+  }
+
+  function findPanels() {
+    var splits = Array.from(document.querySelectorAll('.flex.h-full.w-full.overflow-hidden')).filter(function (el) {
+      return el.querySelector('.bg-edge') !== null;
+    });
+    if (!splits.length) return null;
+    var outer = splits[0];
+    var ok = Array.from(outer.children);
+    if (ok.length < 3) return null;
+    return { sources: ok[0], build: ok[2] };
+  }
+
+  function inject() {
+    if (document.getElementById('mob-forge-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'mob-forge-bar';
+    [
+      { id: 'sources', label: 'Sources', icon: '📂' },
+      { id: 'build',   label: 'Build',   icon: '⚡' },
+    ].forEach(function (t) {
+      var btn = document.createElement('button');
+      btn.dataset.tab = t.id;
+      btn.innerHTML = '<span class="mob-icon">' + t.icon + '</span><span>' + t.label + '</span>';
+      btn.addEventListener('click', function () { applyTab(t.id); });
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(bar);
+    applyTab(current);
+  }
+
+  var tries = 0;
+  function tryInit() {
+    var p = findPanels();
+    if (p) { P = p; inject(); } else if (tries++ < 50) { setTimeout(tryInit, 150); }
+  }
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(tryInit, 200); });
 })();
     </script>
   </head>

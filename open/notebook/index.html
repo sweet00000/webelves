@@ -89,16 +89,18 @@
 
   /* ── find panels via confirmed class structure ─ */
   function findPanels() {
-    var splits = document.querySelectorAll('.flex.h-full.w-full.overflow-hidden');
+    /* only consider splits that contain a bg-edge handle (confirms it's a ResizableSplit Xe) */
+    var splits = Array.from(document.querySelectorAll('.flex.h-full.w-full.overflow-hidden')).filter(function (el) {
+      return el.querySelector('.bg-edge') !== null;
+    });
     if (splits.length < 2) return null;
     var outer = splits[0];
     var ok = Array.from(outer.children);
     if (ok.length < 3) return null;
     var sources = ok[0]; /* class="overflow-hidden", inline width set by Xe */
     var inner   = ok[2]; /* class="flex-1 overflow-hidden" */
-    /* inner split lives inside inner */
-    var innerSplit = inner.querySelector('.flex.h-full.w-full.overflow-hidden');
-    if (!innerSplit) innerSplit = splits[1];
+    /* inner split: find within `inner` */
+    var innerSplit = splits.find(function (s) { return inner.contains(s); });
     if (!innerSplit) return null;
     var ik = Array.from(innerSplit.children);
     if (ik.length < 3) return null;
